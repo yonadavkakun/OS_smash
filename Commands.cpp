@@ -244,17 +244,37 @@ void JobsList::addJob(Command *cmd, bool isStopped, pid_t jobPID) {
     m_jobs.insert({uniqueIID, newJob});
 }
 
-void JobsList::printJobsList(){}
+void JobsList::printJobsList() {
+    this->removeFinishedJobs();
+}
 
-void JobsList::killAllJobs(){}
+void JobsList::killAllJobs() {
+    this->removeFinishedJobs();
+    std::cout << "smash: sending SIGKILL signal to " << m_jobs.size() << " jobs:" << std::endl;
+    auto iter = m_jobs.begin();
+    while (iter != m_jobs.end()) {
+        std::cout << iter->second.m_jobPID << ": " << iter->second.m_jobCommandString << std::endl;
+        int result = kill(iter->second.m_jobPID, SIGKILL);
+        if (result == -1) printError("kill");
+        iter = m_jobs.erase(iter);
+    }
+}
 
-JobsList::JobEntry* JobsList::getJobById(int jobId){}
+JobsList::JobEntry* JobsList::getJobById(int jobId) {
+    this->removeFinishedJobs();
+}
 
-void JobsList::removeJobById(int jobId){}
+void JobsList::removeJobById(int jobId) {
+    this->removeFinishedJobs();
+}
 
-JobsList::JobEntry* JobsList::getLastJob(int *lastJobId){}
+JobsList::JobEntry* JobsList::getLastJob(int *lastJobId) {
+    this->removeFinishedJobs();
+}
 
-JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId){}
+JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
+    this->removeFinishedJobs();
+}
 
 //--------------------COMMAND CLASS!!!!!--------------------//
 std::string Command::getCmdLine() {
