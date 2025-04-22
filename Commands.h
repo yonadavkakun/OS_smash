@@ -200,7 +200,7 @@ public:
 };
 
 //jobs
-//No direct system calls needed
+//No direct system calls needed.
 //Use internal job list (vector/map with PIDs + metadata)
 //waitpid(pid, ...) with WNOHANG to check if jobs are still running
 class JobsCommand : public BuiltInCommand {

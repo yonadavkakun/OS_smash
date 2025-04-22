@@ -84,53 +84,6 @@ void _removeBackgroundSign(char *cmd_line) {
 
 // TODO: Add your implementation for classes in Commands.h 
 
-SmallShell::SmallShell() {
-    // TODO: add your implementation
-}
-
-SmallShell::~SmallShell() {
-    // TODO: add your implementation
-}
-
-/**
-* Creates and returns a pointer to Command class which matches the given command line (cmd_line)
-*/
-Command *SmallShell::CreateCommand(const char *cmd_line) {
-    // For example:
-    string cmd_s = _trim(string(cmd_line));
-    string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
-
-    if (firstWord.compare("pwd") == 0) {
-        return new GetCurrDirCommand(cmd_line);
-    } else if (firstWord.compare("showpid") == 0) {
-        return new ShowPidCommand(cmd_line);
-    } else if (firstWord.compare("chprompt") == 0) {
-        return new ChpromptCommand(cmd_line);
-    } else if (firstWord.compare("cd") == 0) {
-        return new ChangeDirCommand(cmd_line);
-    } else if (firstWord.compare("jobs") == 0) {
-        //return
-        return new JobsCommand(cmd_line);
-    } else if (firstWord.compare("fg") == 0) {
-        return new ForegroundCommand(cmd_line);
-    } else if (firstWord.compare("quit") == 0) {
-        return new QuitCommand(cmd_line);
-    } else if (firstWord.compare("kill") == 0) {
-        return new KillCommand(cmd_line);
-    } else if (firstWord.compare("alias") == 0) {
-        return new AliasCommand(cmd_line);
-    } else if (firstWord.compare("unalias") == 0) {
-        return new UnAliasCommand(cmd_line);
-    } else if (firstWord.compare("unsetenv") == 0) {
-        return new UnSetEnvCommand(cmd_line);
-    } else if (firstWord.compare("watchproc") == 0) {
-        return new WatchProcCommand(cmd_line);
-    } else {
-        return new ExternalCommand(cmd_line);
-    }
-    return nullptr;
-}
-
 void ChpromptCommand::execute() {
     if (m_argc == 1) {
         return;
@@ -185,12 +138,60 @@ void ChangeDirCommand::execute() {
 
 
 //--------------------SMASH!!!!!--------------------//
+/**
+* Creates and returns a pointer to Command class which matches the given command line (cmd_line)
+*/
+Command *SmallShell::CreateCommand(const char *cmd_line) {
+    // For example:
+    string cmd_s = _trim(string(cmd_line));
+    string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
+
+    if (firstWord.compare("pwd") == 0) {
+        return new GetCurrDirCommand(cmd_line);
+    } else if (firstWord.compare("showpid") == 0) {
+        return new ShowPidCommand(cmd_line);
+    } else if (firstWord.compare("chprompt") == 0) {
+        return new ChpromptCommand(cmd_line);
+    } else if (firstWord.compare("cd") == 0) {
+        return new ChangeDirCommand(cmd_line);
+    } else if (firstWord.compare("jobs") == 0) {
+        //return
+        return new JobsCommand(cmd_line);
+    } else if (firstWord.compare("fg") == 0) {
+        return new ForegroundCommand(cmd_line);
+    } else if (firstWord.compare("quit") == 0) {
+        return new QuitCommand(cmd_line);
+    } else if (firstWord.compare("kill") == 0) {
+        return new KillCommand(cmd_line);
+    } else if (firstWord.compare("alias") == 0) {
+        return new AliasCommand(cmd_line);
+    } else if (firstWord.compare("unalias") == 0) {
+        return new UnAliasCommand(cmd_line);
+    } else if (firstWord.compare("unsetenv") == 0) {
+        return new UnSetEnvCommand(cmd_line);
+    } else if (firstWord.compare("watchproc") == 0) {
+        return new WatchProcCommand(cmd_line);
+    } else {
+        return new ExternalCommand(cmd_line);
+    }
+    return nullptr;
+}
+
+SmallShell::SmallShell() {
+    // TODO: add your implementation
+}
+
+SmallShell::~SmallShell() {
+    // TODO: add your implementation
+}
+
 void SmallShell::executeCommand(const char *cmd_line) {
     // TODO: Add your implementation here
-    // for example:
-    // Command* cmd = CreateCommand(cmd_line);
-    // cmd->execute();
-    // Please note that you must fork smash process for some commands (e.g., external commands....)
+    Command* cmd = CreateCommand(cmd_line);
+    cmd->execute();
+    //TODO: maybe delete cmd is needed as CreateCommand() is "new command"
+
+    //Please note that you must fork smash process for some commands (e.g., external commands....)
 }
 
 std::string SmallShell::getPrompt() {
