@@ -288,10 +288,22 @@ void JobsList::removeJobById(int jobId) {
 
 JobsList::JobEntry* JobsList::getLastJob(int *lastJobId) {
     this->removeFinishedJobs();
+    if (m_jobs.size() == 0) return nullptr;
+    auto last = --m_jobs.end();
+    return &last->second;
 }
 
 JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
     this->removeFinishedJobs();
+    if (m_jobs.size() == 0) return nullptr;
+    auto iterReversed = --m_jobs.end();
+    while (iterReversed->second.m_isStopped != true && iterReversed != m_jobs.begin()) {
+        --iterReversed;
+    }
+    if (iterReversed == m_jobs.begin() && iterReversed->second.m_isStopped != true) {
+        return nullptr;
+    }
+    return &iterReversed->second;
 }
 
 //--------------------COMMAND CLASS!!!!!--------------------//
