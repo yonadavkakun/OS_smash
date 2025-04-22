@@ -233,10 +233,21 @@ void JobsList::addJob(Command *cmd, bool isStopped, pid_t jobPID) {
 }
 
 void JobsList::removeFinishedJobs() {
+    auto iter = m_jobs.begin();
+    while (iter != m_jobs.end()) {
+        int status; //might need to use in the future, currently unsure if status is needed
+        pid_t result = waitpid(iter->second.m_jobPID, &status, WNOHANG);
 
+        if (result == -1) printError("waitpid");
+        else if (result == 0) ++iter;
+        else iter = m_jobs.erase(iter);
+    }
 }
 
 //--------------------COMMAND CLASS!!!!!--------------------//
 std::string Command::getCmdLine() {
     return this->m_cmd_line;
 }
+
+
+
