@@ -2,6 +2,9 @@
 #ifndef SMASH_COMMAND_H_
 #define SMASH_COMMAND_H_
 
+#include <map>
+#include <memory>
+#include <utility>
 #include <vector>
 
 #define COMMAND_MAX_LENGTH (200)
@@ -9,6 +12,11 @@
 
 class Command {
     // TODO: Add your data members
+protected:
+    std::string m_cmd_line;
+    int m_argc;
+    std::string m_argv[COMMAND_MAX_ARGS+1];
+
 public:
     Command(const char *cmd_line);
 
@@ -23,7 +31,7 @@ public:
 
 class BuiltInCommand : public Command {
 public:
-    BuiltInCommand(const char *cmd_line);
+    BuiltInCommand(const char *cmd_line): Command(cmd_line) {};
 
     virtual ~BuiltInCommand() {
     }
@@ -93,6 +101,7 @@ public:
     void execute() override;
 };
 
+//cd: chdir(const char *path) --AND ALSO-- getcwd() ??? getpwd() probably
 class ChangeDirCommand : public BuiltInCommand {
     // TODO: Add your data members public:
     ChangeDirCommand(const char *cmd_line, char **plastPwd);
@@ -103,6 +112,7 @@ class ChangeDirCommand : public BuiltInCommand {
     void execute() override;
 };
 
+//pwd: getcwd(char *buf, size_t size)
 class GetCurrDirCommand : public BuiltInCommand {
 public:
     GetCurrDirCommand(const char *cmd_line);
@@ -113,6 +123,7 @@ public:
     void execute() override;
 };
 
+//showpid: getpid()
 class ShowPidCommand : public BuiltInCommand {
 public:
     ShowPidCommand(const char *cmd_line);
@@ -123,8 +134,17 @@ public:
     void execute() override;
 };
 
+class ChpromptCommand : public BuiltInCommand
+{
+public:
+    ChpromptCommand(const char *cmd_line) : BuiltInCommand(cmd_line) {}
+    virtual ~ChpromptCommand() {}
+    void execute() override;
+};
+
 class JobsList;
 
+//quit
 class QuitCommand : public BuiltInCommand {
     // TODO: Add your data members public:
     QuitCommand(const char *cmd_line, JobsList *jobs);
@@ -139,11 +159,22 @@ class QuitCommand : public BuiltInCommand {
 class JobsList {
 public:
     class JobEntry {
-        // TODO: Add your data members
+    public:
+        std::string m_jobCommandString;
+        pid_t m_jobPID;
+        int m_jobIID;
+
+        JobEntry(std::string commandString, pid_t PID, int IID) : m_jobCommandString(commandString), m_jobPID(PID), m_jobIID(IID) {};
     };
 
-    // TODO: Add your data members
+private:
+    static int m_newIID;
+    std::map<int, JobEntry> m_jobs; //insert using: m_jobs[job.m_jobIID] = job;
+
+
 public:
+    int getNewIID();
+
     JobsList();
 
     ~JobsList();
@@ -158,7 +189,7 @@ public:
 
     JobEntry *getJobById(int jobId);
 
-    void removeJobById(int jobId);
+    void removeJobById(int jobId); // TODO: ask
 
     JobEntry *getLastJob(int *lastJobId);
 
@@ -167,6 +198,10 @@ public:
     // TODO: Add extra methods or modify exisitng ones as needed
 };
 
+//jobs
+//No direct system calls needed
+//Use internal job list (vector/map with PIDs + metadata)
+//waitpid(pid, ...) with WNOHANG to check if jobs are still running
 class JobsCommand : public BuiltInCommand {
     // TODO: Add your data members
 public:
@@ -178,6 +213,7 @@ public:
     void execute() override;
 };
 
+//kill
 class KillCommand : public BuiltInCommand {
     // TODO: Add your data members
 public:
@@ -189,6 +225,7 @@ public:
     void execute() override;
 };
 
+//fg: waitpid(pid, 0, 0)
 class ForegroundCommand : public BuiltInCommand {
     // TODO: Add your data members
 public:
@@ -200,6 +237,7 @@ public:
     void execute() override;
 };
 
+//alias
 class AliasCommand : public BuiltInCommand {
 public:
     AliasCommand(const char *cmd_line);
@@ -210,6 +248,7 @@ public:
     void execute() override;
 };
 
+//unalias
 class UnAliasCommand : public BuiltInCommand {
 public:
     UnAliasCommand(const char *cmd_line);
@@ -220,6 +259,7 @@ public:
     void execute() override;
 };
 
+//unsetenv
 class UnSetEnvCommand : public BuiltInCommand {
 public:
     UnSetEnvCommand(const char *cmd_line);
@@ -230,6 +270,7 @@ public:
     void execute() override;
 };
 
+//watchproc
 class WatchProcCommand : public BuiltInCommand {
 public:
     WatchProcCommand(const char *cmd_line);
@@ -243,6 +284,9 @@ public:
 class SmallShell {
 private:
     // TODO: Add your data members
+    std::string m_prompt = "smash";
+    JobsList m_jobsList;
+    std::string m_lastPWD;
     SmallShell();
 
 public:
@@ -262,6 +306,15 @@ public:
     void executeCommand(const char *cmd_line);
 
     // TODO: add extra methods as needed
+    std::string getPrompt();
+    void setPrompt(std::string value);
+
+    JobsList& getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
+
+    std::string getLastPWD();
+    void setLastPWD(std::string value);
+
+
 };
 
 #endif //SMASH_COMMAND_H_

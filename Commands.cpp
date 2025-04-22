@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <iomanip>
 #include "Commands.h"
+#include <sys/syslimits.h>
 
 using namespace std;
 
@@ -89,29 +90,137 @@ SmallShell::~SmallShell() {
 */
 Command *SmallShell::CreateCommand(const char *cmd_line) {
     // For example:
-  /*
-  string cmd_s = _trim(string(cmd_line));
-  string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
+    string cmd_s = _trim(string(cmd_line));
+    string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
 
-  if (firstWord.compare("pwd") == 0) {
-    return new GetCurrDirCommand(cmd_line);
-  }
-  else if (firstWord.compare("showpid") == 0) {
-    return new ShowPidCommand(cmd_line);
-  }
-  else if ...
-  .....
-  else {
-    return new ExternalCommand(cmd_line);
-  }
-  */
+    if (firstWord.compare("pwd") == 0) {
+        return new GetCurrDirCommand(cmd_line);
+    }
+    else if (firstWord.compare("showpid") == 0) {
+        return new ShowPidCommand(cmd_line);
+    }
+    else if (firstWord.compare("chprompt") == 0) {
+        return new ChpromptCommand(cmd_line);
+    }
+    else if (firstWord.compare("cd") == 0) {
+        return new ChangeDirCommand(cmd_line);
+    }
+    else if (firstWord.compare("jobs") == 0) { //return
+        return new JobsCommand(cmd_line);
+    }
+    else if (firstWord.compare("fg") == 0) {
+        return new ForegroundCommand(cmd_line);
+    }
+    else if (firstWord.compare("quit") == 0) {
+        return new QuitCommand(cmd_line);
+    }
+    else if (firstWord.compare("kill") == 0) {
+        return new KillCommand(cmd_line);
+    }
+    else if (firstWord.compare("alias") == 0) {
+        return new AliasCommand(cmd_line);
+    }
+    else if (firstWord.compare("unalias") == 0) {
+        return new UnAliasCommand(cmd_line);
+    }
+    else if (firstWord.compare("unsetenv") == 0) {
+        return new UnSetEnvCommand(cmd_line);
+    }
+    else if (firstWord.compare("watchproc") == 0) {
+        return new WatchProcCommand(cmd_line);
+    }
+    else {
+        return new ExternalCommand(cmd_line);
+    }
     return nullptr;
 }
+void ChpromptCommand::execute() {
+    if (m_argc==1) {
+        return;
+    }
+    SmallShell::getInstance().setPrompt(m_argv[1]);
+}
 
+void ShowPidCommand::execute() {
+    pid_t pid = getpid();
+    string curr_prompt = SmallShell::getInstance().getPrompt();
+    cout << curr_prompt <<" pid is " << pid << endl;
+}
+
+void GetCurrDirCommand::execute() {
+    char cwd[PATH_MAX];
+    if (!getcwd(cwd, PATH_MAX)) {
+        perror("smash error: getcwd failed");
+        return;
+    }
+    std::cout << cwd << std::endl;
+}
+
+void ChangeDirCommand::execute() {
+    if (m_argc==1) {
+        return;
+    }
+    if (m_argc>2) {
+        std::cerr << "smash error: cd: too many arguments" << std::endl;
+        return;
+    }
+    std::string newPath;
+    if (m_argv[1]=="-") {
+        if (SmallShell::getInstance().getLastPWD()=="") {
+            std::cerr << "smash error: cd: OLDPWD not set" << std::endl;
+            return;
+        }
+        newPath = SmallShell::getInstance().getLastPWD();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//--------------------SMASH!!!!!--------------------//
 void SmallShell::executeCommand(const char *cmd_line) {
     // TODO: Add your implementation here
     // for example:
     // Command* cmd = CreateCommand(cmd_line);
     // cmd->execute();
     // Please note that you must fork smash process for some commands (e.g., external commands....)
+}
+std::string SmallShell::getPrompt() {
+    return this->m_prompt;
+}
+void SmallShell::setPrompt(std::string value) {
+    this->m_prompt = value;
+}
+
+JobsList& SmallShell::getJobsList() {
+    return this->m_jobsList;
+}
+
+std::string SmallShell::getLastPWD() {
+    return this->m_lastPWD;
+}
+void SmallShell::setLastPWD(std::string value) {
+    this->m_lastPWD = value;
+}
+
+//--------------------JOBS LIST!!!!!--------------------//
+JobsList::JobsList() {
+ this->m_newIID = 1;
+}
+int JobsList::getNewIID() {
+    int value = this->m_newIID;
+    this->m_newIID += 1;
+    return value;
 }
