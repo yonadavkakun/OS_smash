@@ -214,14 +214,10 @@ void SmallShell::setLastPWD(std::string value) {
 }
 
 //--------------------JOBS LIST!!!!!--------------------//
-JobsList::JobsList() {
-    this->m_newIID = 1;
-}
-
-int JobsList::getNewIID() {
-    int value = this->m_newIID;
-    this->m_newIID += 1;
-    return value;
+int JobsList::calcNewID() {
+    if (m_jobs.size() == 0) return 1;
+    auto last = --m_jobs.end();
+    return last->first + 1;
 }
 
 void JobsList::removeFinishedJobs() {
@@ -238,10 +234,10 @@ void JobsList::removeFinishedJobs() {
 
 void JobsList::addJob(Command *cmd, bool isStopped, pid_t jobPID) {
     this->removeFinishedJobs();
-    int uniqueIID = getNewIID();
+    int uniqueID = calcNewID();
     std::string cmdLine = cmd->getCmdLine();
-    JobEntry newJob(cmdLine, jobPID, uniqueIID, isStopped);
-    m_jobs.insert({uniqueIID, newJob});
+    JobEntry newJob(cmdLine, jobPID, uniqueID, isStopped);
+    m_jobs.insert({uniqueID, newJob});
 }
 
 void JobsList::printJobsList() {

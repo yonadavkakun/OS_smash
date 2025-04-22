@@ -163,19 +163,18 @@ public:
     public:
         std::string m_jobCommandString;
         pid_t m_jobPID;
-        int m_jobIID;
+        int m_jobID;
         bool m_isStopped;
 
-        JobEntry(std::string commandString, pid_t PID, int IID, bool isStopped) : m_jobCommandString(commandString), m_jobPID(PID), m_jobIID(IID), m_isStopped(isStopped) {};
+        JobEntry(std::string commandString, pid_t PID, int ID, bool isStopped) : m_jobCommandString(commandString), m_jobPID(PID), m_jobID(ID), m_isStopped(isStopped) {};
     };
 
 private:
-    static int m_newIID;
-    std::map<int, JobEntry> m_jobs; //insert using: m_jobs[job.m_jobIID] = job;
+    std::map<int, JobEntry> m_jobs; //insert using: m_jobs[job.m_jobID] = job;
 
 
 public:
-    int getNewIID();
+    int calcNewID();
 
     JobsList();
 
