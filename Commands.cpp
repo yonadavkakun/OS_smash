@@ -216,3 +216,20 @@ int JobsList::getNewIID() {
     this->m_newIID += 1;
     return value;
 }
+
+void JobsList::addJob(Command *cmd, bool isStopped, pid_t jobPID) {
+    this->removeFinishedJobs();
+    int uniqueIID = getNewIID();
+    std::string cmdLine = cmd->getCmdLine();
+    JobEntry newJob(cmdLine, jobPID, uniqueIID, isStopped);
+    m_jobs.insert({uniqueIID, newJob});
+}
+
+void JobsList::removeFinishedJobs() {
+
+}
+
+//--------------------COMMAND CLASS!!!!!--------------------//
+std::string Command::getCmdLine() {
+    return this->m_cmd_line;
+}
