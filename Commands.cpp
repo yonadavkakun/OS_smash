@@ -263,6 +263,12 @@ void JobsList::killAllJobs() {
 
 JobsList::JobEntry* JobsList::getJobById(int jobId) {
     this->removeFinishedJobs();
+    auto iter = m_jobs.begin();
+    while (iter != m_jobs.end()) {
+        if (iter->first == jobId) return &iter->second;
+        ++iter;
+    }
+    return nullptr;
 }
 
 void JobsList::removeJobById(int jobId) {
