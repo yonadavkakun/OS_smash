@@ -23,6 +23,13 @@ const std::string WHITESPACE = " \n\r\t\f\v";
 #define FUNC_EXIT()
 #endif
 
+//--------------------OWN HELPERS--------------------//
+void printError(std::string sysCallName) {
+    std::string errorText = "smash error: " + sysCallName + " failed";
+    perror(errorText.c_str());
+}
+
+//--------------------GIVEN HELPERS--------------------//
 string _ltrim(const std::string &s) {
     size_t start = s.find_first_not_of(WHITESPACE);
     return (start == std::string::npos) ? "" : s.substr(start);
