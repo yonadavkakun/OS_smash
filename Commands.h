@@ -24,6 +24,7 @@ public:
 
     virtual void execute() = 0;
 
+    std::string getCmdLine(); //added by EITAN go over it for inheritance proofing.
     //virtual void prepare();
     //virtual void cleanup();
     // TODO: Add your extra methods if needed
@@ -163,8 +164,9 @@ public:
         std::string m_jobCommandString;
         pid_t m_jobPID;
         int m_jobIID;
+        bool m_isStopped;
 
-        JobEntry(std::string commandString, pid_t PID, int IID) : m_jobCommandString(commandString), m_jobPID(PID), m_jobIID(IID) {};
+        JobEntry(std::string commandString, pid_t PID, int IID, bool isStopped) : m_jobCommandString(commandString), m_jobPID(PID), m_jobIID(IID), m_isStopped(isStopped) {};
     };
 
 private:
@@ -179,7 +181,7 @@ public:
 
     ~JobsList();
 
-    void addJob(Command *cmd, bool isStopped = false);
+    void addJob(Command *cmd, bool isStopped = false, pid_t jobPID);
 
     void printJobsList();
 
