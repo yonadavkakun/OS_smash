@@ -224,14 +224,6 @@ int JobsList::getNewIID() {
     return value;
 }
 
-void JobsList::addJob(Command *cmd, bool isStopped, pid_t jobPID) {
-    this->removeFinishedJobs();
-    int uniqueIID = getNewIID();
-    std::string cmdLine = cmd->getCmdLine();
-    JobEntry newJob(cmdLine, jobPID, uniqueIID, isStopped);
-    m_jobs.insert({uniqueIID, newJob});
-}
-
 void JobsList::removeFinishedJobs() {
     auto iter = m_jobs.begin();
     while (iter != m_jobs.end()) {
@@ -243,6 +235,26 @@ void JobsList::removeFinishedJobs() {
         else iter = m_jobs.erase(iter);
     }
 }
+
+void JobsList::addJob(Command *cmd, bool isStopped, pid_t jobPID) {
+    this->removeFinishedJobs();
+    int uniqueIID = getNewIID();
+    std::string cmdLine = cmd->getCmdLine();
+    JobEntry newJob(cmdLine, jobPID, uniqueIID, isStopped);
+    m_jobs.insert({uniqueIID, newJob});
+}
+
+void JobsList::printJobsList(){}
+
+void JobsList::killAllJobs(){}
+
+JobsList::JobEntry* JobsList::getJobById(int jobId){}
+
+void JobsList::removeJobById(int jobId){}
+
+JobsList::JobEntry* JobsList::getLastJob(int *lastJobId){}
+
+JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId){}
 
 //--------------------COMMAND CLASS!!!!!--------------------//
 std::string Command::getCmdLine() {
