@@ -170,7 +170,7 @@ public:
     };
 
 private:
-    std::map<int, JobEntry> m_jobs; //insert using: m_jobs[job.m_jobID] = job;
+    std::map<int, JobEntry> m_jobs;
 
 
 public:
@@ -180,7 +180,7 @@ public:
 
     ~JobsList();
 
-    void addJob(Command *cmd, bool isStopped = false, pid_t jobPID);
+    void addJob(Command* cmd, bool isStopped = false, pid_t jobPID);
 
     void printJobsList();
 
@@ -188,13 +188,13 @@ public:
 
     void removeFinishedJobs();
 
-    JobEntry *getJobById(int jobId);
+    JobEntry* getJobById(int jobId); //remember returns nullptr if doesnt exist.
 
     void removeJobById(int jobId); // TODO: ask
 
-    JobEntry *getLastJob(int *lastJobId);
+    JobEntry* getLastJob(int* lastJobId);
 
-    JobEntry *getLastStoppedJob(int *jobId);
+    JobEntry* getLastStoppedJob(int* jobId);
 
     // TODO: Add extra methods or modify exisitng ones as needed
 };
