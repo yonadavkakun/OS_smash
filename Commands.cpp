@@ -242,6 +242,11 @@ void JobsList::addJob(Command *cmd, bool isStopped, pid_t jobPID) {
 
 void JobsList::printJobsList() {
     this->removeFinishedJobs();
+    auto iter = m_jobs.begin();
+    while (iter != m_jobs.end()) {
+        std::cout << "[" << iter->first << "] " << iter->second.m_jobCommandString << std::endl;
+        ++iter;
+    }
 }
 
 void JobsList::killAllJobs() {
