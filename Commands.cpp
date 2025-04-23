@@ -167,7 +167,7 @@ void ChangeDirCommand::execute() {
 }
 
 
-//--------------------SMASH!!!!!--------------------//
+//--------------------SMASH CLASS!!!!!--------------------//
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
 */
@@ -240,7 +240,7 @@ JobsList* SmallShell::getJobsList() {
     return &this->m_jobsList;
 }
 
-//--------------------JOBS LIST!!!!!--------------------//
+//--------------------JOBSLIST CLASS!!!!!--------------------//
 int JobsList::calcNewID() {
     if (m_jobs.size() == 0) return 1;
     auto last = --m_jobs.end();
@@ -334,11 +334,10 @@ Command::Command(const std::string cmd_line) {
 
 }
 
-
-
 bool Command::getIsBackgroundCommand() {
     return this->m_isBackgroundCommand;
 }
+
 std::string Command::getCmdLine() {
     return this->m_cmdLine;
 }
