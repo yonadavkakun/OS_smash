@@ -241,7 +241,7 @@ private:
 public:
     SmallShell(SmallShell const &) = delete; // disable copy ctor
     void operator=(SmallShell const &) = delete; // disable = operator
-    static SmallShell &getInstance() // make SmallShell singleton
+    static SmallShell& getInstance() // make SmallShell singleton
     {
         static SmallShell instance; // Guaranteed to be destroyed.
         // Instantiated on first use.
@@ -249,7 +249,7 @@ public:
     }
     ~SmallShell();
 
-    Command *CreateCommand(const char *cmd_line);
+    Command* CreateCommand(const char *cmd_line);
     void executeCommand(const char *cmd_line);
 
     // TODO: add extra methods as needed

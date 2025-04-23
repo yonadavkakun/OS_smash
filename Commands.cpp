@@ -28,18 +28,15 @@ void printError(std::string sysCallName) {
     std::string errorText = "smash error: " + sysCallName + " failed";
     perror(errorText.c_str());
 }
-
 //--------------------GIVEN HELPERS--------------------//
 string _ltrim(const std::string &s) {
     size_t start = s.find_first_not_of(WHITESPACE);
     return (start == std::string::npos) ? "" : s.substr(start);
 }
-
 string _rtrim(const std::string &s) {
     size_t end = s.find_last_not_of(WHITESPACE);
     return (end == std::string::npos) ? "" : s.substr(0, end + 1);
 }
-
 string _trim(const std::string &s) {
     return _rtrim(_ltrim(s));
 }
@@ -116,8 +113,7 @@ std::string removeBackgroundSign(const std::string cmd_line) {
 }
 
 
-// TODO: Add your implementation for classes in Commands.h 
-
+// TODO: Add your implementation for classes in Commands.h
 void ChPromptCommand::execute() {
     if (m_argc == 1) {
         return;
@@ -175,7 +171,14 @@ void ChangeDirCommand::execute() {
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
 */
-Command *SmallShell::CreateCommand(const char *cmd_line) {
+SmallShell::SmallShell() {
+    // TODO: add your implementation
+}
+SmallShell::~SmallShell() {
+    // TODO: add your implementation
+}
+
+Command* SmallShell::CreateCommand(const char *cmd_line) {
     // For example:
     std::string cmd_s = _trim(string(cmd_line));
     std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
@@ -210,15 +213,6 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
     }
     return nullptr;
 }
-
-SmallShell::SmallShell() {
-    // TODO: add your implementation
-}
-
-SmallShell::~SmallShell() {
-    // TODO: add your implementation
-}
-
 void SmallShell::executeCommand(const char *cmd_line) {
     // TODO: Add your implementation here
     Command* cmd = CreateCommand(cmd_line);
@@ -231,21 +225,19 @@ void SmallShell::executeCommand(const char *cmd_line) {
 std::string SmallShell::getPrompt() {
     return this->m_prompt;
 }
-
 void SmallShell::setPrompt(std::string value) {
     this->m_prompt = value;
-}
-
-JobsList* SmallShell::getJobsList() {
-    return &this->m_jobsList;
 }
 
 std::string SmallShell::getLastPWD() {
     return this->m_lastPWD;
 }
-
 void SmallShell::setLastPWD(std::string value) {
     this->m_lastPWD = value;
+}
+
+JobsList* SmallShell::getJobsList() {
+    return &this->m_jobsList;
 }
 
 //--------------------JOBS LIST!!!!!--------------------//
