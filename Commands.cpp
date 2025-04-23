@@ -130,7 +130,7 @@ void ShowPidCommand::execute() {
 void GetCurrDirCommand::execute() {
     char cwd[PATH_MAX];
     if (!getcwd(cwd, PATH_MAX)) {
-        perror("smash error: getcwd failed");
+        printError("getcwd");
         return;
     }
     std::cout << cwd << std::endl;
@@ -152,11 +152,11 @@ void ChangeDirCommand::execute() {
         }
         newPath = SmallShell::getInstance().getLastPWD();
     } else {
-        newPath = m_argv[1];
+        newPath = m_argv[1]; //TODO: check if its relative or global, if relative need to concatenate that string
     }
     char cwd[PATH_MAX];
     if (!getcwd(cwd, PATH_MAX)) {
-        perror("smash error: getcwd failed");
+        printError("getcwd");
         return;
     }
     if (chdir(newPath.c_str()) == -1) {
