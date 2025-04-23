@@ -17,16 +17,13 @@ protected:
     int m_argc;
     std::string m_argv[COMMAND_MAX_ARGS+1];
     bool m_isBackgroundCommand;
-
 public:
     Command(const std::string cmd_line);
-
     virtual ~Command();
-
     virtual void execute() = 0;
 
     bool getIsBackgroundCommand();
-    std::string getCmdLine(); //added by EITAN go over it for inheritance proofing.
+    std::string getCmdLine();
     std::string getCmdLineFull();
     //virtual void prepare();
     //virtual void cleanup();
