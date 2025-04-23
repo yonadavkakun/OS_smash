@@ -190,14 +190,13 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
     } else if (firstWord.compare("cd") == 0) {
         return new ChangeDirCommand(cmd_s, this->getLastPWD());
     } else if (firstWord.compare("jobs") == 0) {
-        //return
-        return new JobsCommand(cmd_s);
+        return new JobsCommand(cmd_s, this->getJobsList());
     } else if (firstWord.compare("fg") == 0) {
-        return new ForegroundCommand(cmd_s);
+        return new ForegroundCommand(cmd_s, this->getJobsList());
     } else if (firstWord.compare("quit") == 0) {
-        return new QuitCommand(cmd_s);
+        return new QuitCommand(cmd_s, this->getJobsList());
     } else if (firstWord.compare("kill") == 0) {
-        return new KillCommand(cmd_s);
+        return new KillCommand(cmd_s, this->getJobsList());
     } else if (firstWord.compare("alias") == 0) {
         return new AliasCommand(cmd_s);
     } else if (firstWord.compare("unalias") == 0) {
@@ -237,8 +236,8 @@ void SmallShell::setPrompt(std::string value) {
     this->m_prompt = value;
 }
 
-JobsList &SmallShell::getJobsList() {
-    return this->m_jobsList;
+JobsList* SmallShell::getJobsList() {
+    return &this->m_jobsList;
 }
 
 std::string SmallShell::getLastPWD() {
