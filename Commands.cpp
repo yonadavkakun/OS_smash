@@ -58,10 +58,29 @@ int _parseCommandLine(const char *cmd_line, char **args) {
 
     FUNC_EXIT()
 }
+int parseCommandLine(const std::string& cmd_line, std::string* args) {
+    FUNC_ENTRY();
+    std::istringstream iss(_trim(cmd_line));
+    std::string token;
+    int i = 0;
 
-bool _isBackgroundComamnd(const char *cmd_line) {
+    while (iss >> token && i < COMMAND_MAX_ARGS+1) {
+        args[i] = token;
+        i++;
+        if (i < COMMAND_MAX_ARGS+1) {
+            args[i] = "";
+        }
+    }
+    return i;
+    FUNC_EXIT();
+}
+
+bool _isBackgroundCommand(const char *cmd_line) {
     const string str(cmd_line);
     return str[str.find_last_not_of(WHITESPACE)] == '&';
+}
+bool isBackgroundCommand(const std::string cmd_line) {
+    return cmd_line[cmd_line.find_last_not_of(WHITESPACE)] == '&';
 }
 
 void _removeBackgroundSign(char *cmd_line) {
@@ -81,7 +100,6 @@ void _removeBackgroundSign(char *cmd_line) {
     // truncate the command line string up to the last non-space character
     cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
 }
-
 std::string removeBackgroundSign(const std::string cmd_line) {
     std::string result = cmd_line;
     result = _trim(result);
@@ -159,40 +177,37 @@ void ChangeDirCommand::execute() {
 */
 Command *SmallShell::CreateCommand(const char *cmd_line) {
     // For example:
-    std::string cmdLineString(cmd_line);
     std::string cmd_s = _trim(string(cmd_line));
     std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
     firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
-    // std::string cleanCmdLineNoBG = removeBackgroundSign(cmd_s);
-
 
     if (firstWord.compare("pwd") == 0) {
-        return new GetCurrDirCommand(cmdLineString);
+        return new GetCurrDirCommand(cmd_s);
     } else if (firstWord.compare("showpid") == 0) {
-        return new ShowPidCommand(cmdLineString);
+        return new ShowPidCommand(cmd_s);
     } else if (firstWord.compare("chprompt") == 0) {
-        return new ChpromptCommand(cmdLineString);
+        return new ChpromptCommand(cmd_s);
     } else if (firstWord.compare("cd") == 0) {
-        return new ChangeDirCommand(cmdLineString);
+        return new ChangeDirCommand(cmd_s, this->getLastPWDPtr());
     } else if (firstWord.compare("jobs") == 0) {
         //return
-        return new JobsCommand(cmdLineString);
+        return new JobsCommand(cmd_s);
     } else if (firstWord.compare("fg") == 0) {
-        return new ForegroundCommand(cmdLineString);
+        return new ForegroundCommand(cmd_s);
     } else if (firstWord.compare("quit") == 0) {
-        return new QuitCommand(cmdLineString);
+        return new QuitCommand(cmd_s);
     } else if (firstWord.compare("kill") == 0) {
-        return new KillCommand(cmdLineString);
+        return new KillCommand(cmd_s);
     } else if (firstWord.compare("alias") == 0) {
-        return new AliasCommand(cmdLineString);
+        return new AliasCommand(cmd_s);
     } else if (firstWord.compare("unalias") == 0) {
-        return new UnAliasCommand(cmdLineString);
+        return new UnAliasCommand(cmd_s);
     } else if (firstWord.compare("unsetenv") == 0) {
-        return new UnSetEnvCommand(cmdLineString);
+        return new UnSetEnvCommand(cmd_s);
     } else if (firstWord.compare("watchproc") == 0) {
-        return new WatchProcCommand(cmdLineString);
+        return new WatchProcCommand(cmd_s);
     } else {
-        return new ExternalCommand(cmdLineString);
+        return new ExternalCommand(cmd_s);
     }
     return nullptr;
 }
@@ -228,6 +243,9 @@ JobsList &SmallShell::getJobsList() {
 
 std::string SmallShell::getLastPWD() {
     return this->m_lastPWD;
+}
+std::string* SmallShell::getLastPWDPtr() {
+    return &this->m_lastPWD;
 }
 
 void SmallShell::setLastPWD(std::string value) {
@@ -321,16 +339,25 @@ JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
 }
 
 //--------------------COMMAND CLASS!!!!!--------------------//
-Command::Command(const char *cmd_line) {
+Command::Command(const std::string cmd_line) {
+    this->m_cmdLine = removeBackgroundSign(cmd_line);
+    this->m_argc = parseCommandLine(cmd_line, this->m_argv);
+    this-> m_isBackgroundCommand = isBackgroundCommand(cmd_line);
 
 }
 
 
 
-
+bool Command::getIsBackgroundCommand() {
+    return this->m_isBackgroundCommand;
+}
 std::string Command::getCmdLine() {
-    return this->m_cmd_line;
+    return this->m_cmdLine;
 }
-
-
+std::string Command::getCmdLineFull() {
+    if (this->m_isBackgroundCommand) {
+        return this->m_cmdLine + "&";
+    }
+    return this->m_cmdLine;
+}
 
