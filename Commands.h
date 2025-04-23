@@ -108,8 +108,9 @@ public:
 //cd: chdir(const char *path) --AND ALSO-- getcwd() ??? getpwd() probably
 class ChangeDirCommand : public BuiltInCommand {
 public:
-    std::string m_ptrToSmashPWD;
-    ChangeDirCommand(const std::string cmd_line, std::string* plastPwd);
+    std::string m_preChangePWD;
+    ChangeDirCommand(const std::string cmd_line) = delete;
+    ChangeDirCommand(const std::string cmd_line, std::string plastPwd) : BuiltInCommand(cmd_line) {m_preChangePWD = plastPwd;};
 
     virtual ~ChangeDirCommand() {
     }
@@ -317,8 +318,6 @@ public:
     JobsList& getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
 
     std::string getLastPWD();
-    std::string* getLastPWDPtr();
-
     void setLastPWD(std::string value);
 
 

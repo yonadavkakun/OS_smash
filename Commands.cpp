@@ -188,7 +188,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
     } else if (firstWord.compare("chprompt") == 0) {
         return new ChpromptCommand(cmd_s);
     } else if (firstWord.compare("cd") == 0) {
-        return new ChangeDirCommand(cmd_s, this->getLastPWDPtr());
+        return new ChangeDirCommand(cmd_s, this->getLastPWD());
     } else if (firstWord.compare("jobs") == 0) {
         //return
         return new JobsCommand(cmd_s);
@@ -243,9 +243,6 @@ JobsList &SmallShell::getJobsList() {
 
 std::string SmallShell::getLastPWD() {
     return this->m_lastPWD;
-}
-std::string* SmallShell::getLastPWDPtr() {
-    return &this->m_lastPWD;
 }
 
 void SmallShell::setLastPWD(std::string value) {
@@ -342,7 +339,7 @@ JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
 Command::Command(const std::string cmd_line) {
     this->m_cmdLine = removeBackgroundSign(cmd_line);
     this->m_argc = parseCommandLine(cmd_line, this->m_argv);
-    this-> m_isBackgroundCommand = isBackgroundCommand(cmd_line);
+    this->m_isBackgroundCommand = isBackgroundCommand(cmd_line);
 
 }
 
