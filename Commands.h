@@ -13,10 +13,10 @@
 class Command {
     // TODO: Add your data members
 protected:
-    std::string m_cmd_line;
+    std::string m_cmdLine;
     int m_argc;
     std::string m_argv[COMMAND_MAX_ARGS+1];
-    bool m_isBackgroung;
+    bool m_isBackgroundCommand;
 
 public:
     Command(const std::string cmd_line);
@@ -25,7 +25,9 @@ public:
 
     virtual void execute() = 0;
 
+    bool getIsBackgroundCommand();
     std::string getCmdLine(); //added by EITAN go over it for inheritance proofing.
+    std::string getCmdLineFull();
     //virtual void prepare();
     //virtual void cleanup();
     // TODO: Add your extra methods if needed
@@ -105,8 +107,9 @@ public:
 
 //cd: chdir(const char *path) --AND ALSO-- getcwd() ??? getpwd() probably
 class ChangeDirCommand : public BuiltInCommand {
-    // TODO: Add your data members public:
-    ChangeDirCommand(const std::string cmd_line, char **plastPwd);
+public:
+    std::string m_ptrToSmashPWD;
+    ChangeDirCommand(const std::string cmd_line, std::string* plastPwd);
 
     virtual ~ChangeDirCommand() {
     }
@@ -314,6 +317,8 @@ public:
     JobsList& getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
 
     std::string getLastPWD();
+    std::string* getLastPWDPtr();
+
     void setLastPWD(std::string value);
 
 
