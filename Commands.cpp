@@ -282,6 +282,7 @@ JobsList::JobEntry* JobsList::getLastJob(int *lastJobId) {
     this->removeFinishedJobs();
     if (m_jobs.size() == 0) return nullptr;
     auto last = --m_jobs.end();
+    *lastJobId = last->second.m_jobID;
     return &last->second;
 }
 
@@ -295,6 +296,7 @@ JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
     if (iterReversed == m_jobs.begin() && iterReversed->second.m_isStopped != true) {
         return nullptr;
     }
+    *jobId = iterReversed->second.m_jobID;
     return &iterReversed->second;
 }
 
