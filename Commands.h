@@ -35,15 +35,14 @@ public:
 
 class BuiltInCommand : public Command {
 public:
-    BuiltInCommand(const std::string cmd_line): Command(cmd_line) {};
+    BuiltInCommand(const std::string cmd_line) : Command(cmd_line) {};
 
     virtual ~BuiltInCommand() {
     }
 };
-
 class ExternalCommand : public Command {
 public:
-    ExternalCommand(const std::string cmd_line);
+    ExternalCommand(const std::string cmd_line) : Command(cmd_line) {};;
 
     virtual ~ExternalCommand() {
     }
@@ -62,7 +61,6 @@ public:
 
     void execute() override;
 };
-
 class PipeCommand : public Command {
     // TODO: Add your data members
 public:
@@ -73,27 +71,24 @@ public:
 
     void execute() override;
 };
-
 class DiskUsageCommand : public Command {
 public:
-    DiskUsageCommand(const std::string cmd_line);
+    DiskUsageCommand(const std::string cmd_line) : Command(cmd_line) {};
 
     virtual ~DiskUsageCommand() {
     }
 
     void execute() override;
 };
-
 class WhoAmICommand : public Command {
 public:
-    WhoAmICommand(const std::string cmd_line);
+    WhoAmICommand(const std::string cmd_line) : Command(cmd_line) {};
 
     virtual ~WhoAmICommand() {
     }
 
     void execute() override;
 };
-
 class NetInfo : public Command {
     // TODO: Add your data members **BONUS: 10 Points**
 public:
@@ -104,8 +99,7 @@ public:
 
     void execute() override;
 };
-
-//cd: chdir(const char *path) --AND ALSO-- getcwd() ??? getpwd() probably
+//cd
 class ChangeDirCommand : public BuiltInCommand {
 public:
     std::string m_preChangePWD;
@@ -117,39 +111,36 @@ public:
 
     void execute() override;
 };
-
-//pwd: getcwd(char *buf, size_t size)
+//pwd
 class GetCurrDirCommand : public BuiltInCommand {
 public:
-    GetCurrDirCommand(const std::string cmd_line);
+    GetCurrDirCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
 
     virtual ~GetCurrDirCommand() {
     }
 
     void execute() override;
 };
-
-//showpid: getpid()
+//showpid
 class ShowPidCommand : public BuiltInCommand {
 public:
-    ShowPidCommand(const std::string cmd_line);
+    ShowPidCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
 
     virtual ~ShowPidCommand() {
     }
 
     void execute() override;
 };
-
-class ChpromptCommand : public BuiltInCommand
+//chprompt
+class ChPromptCommand : public BuiltInCommand
 {
 public:
-    ChpromptCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {}
-    virtual ~ChpromptCommand() {}
+    ChPromptCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {}
+    virtual ~ChPromptCommand() {}
     void execute() override;
 };
 
 class JobsList;
-
 //quit
 class QuitCommand : public BuiltInCommand {
     // TODO: Add your data members public:
@@ -160,8 +151,6 @@ class QuitCommand : public BuiltInCommand {
 
     void execute() override;
 };
-
-
 class JobsList {
 public:
     class JobEntry {
@@ -203,7 +192,6 @@ public:
 
     // TODO: Add extra methods or modify exisitng ones as needed
 };
-
 //jobs
 //No direct system calls needed.
 //Use internal job list (vector/map with PIDs + metadata)
@@ -218,7 +206,6 @@ public:
 
     void execute() override;
 };
-
 //kill
 class KillCommand : public BuiltInCommand {
     // TODO: Add your data members
@@ -230,7 +217,6 @@ public:
 
     void execute() override;
 };
-
 //fg: waitpid(pid, 0, 0)
 class ForegroundCommand : public BuiltInCommand {
     // TODO: Add your data members
@@ -242,44 +228,40 @@ public:
 
     void execute() override;
 };
-
 //alias
 class AliasCommand : public BuiltInCommand {
 public:
-    AliasCommand(const std::string cmd_line);
+    AliasCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
 
     virtual ~AliasCommand() {
     }
 
     void execute() override;
 };
-
 //unalias
 class UnAliasCommand : public BuiltInCommand {
 public:
-    UnAliasCommand(const std::string cmd_line);
+    UnAliasCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
 
     virtual ~UnAliasCommand() {
     }
 
     void execute() override;
 };
-
 //unsetenv
 class UnSetEnvCommand : public BuiltInCommand {
 public:
-    UnSetEnvCommand(const std::string cmd_line);
+    UnSetEnvCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
 
     virtual ~UnSetEnvCommand() {
     }
 
     void execute() override;
 };
-
 //watchproc
 class WatchProcCommand : public BuiltInCommand {
 public:
-    WatchProcCommand(const std::string cmd_line);
+    WatchProcCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
 
     virtual ~WatchProcCommand() {
     }
@@ -306,21 +288,17 @@ public:
         // Instantiated on first use.
         return instance;
     }
-
     ~SmallShell();
+
 
     void executeCommand(const std::string cmd_line);
 
     // TODO: add extra methods as needed
     std::string getPrompt();
     void setPrompt(std::string value);
-
     JobsList& getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
-
     std::string getLastPWD();
     void setLastPWD(std::string value);
-
-
 };
 
 #endif //SMASH_COMMAND_H_

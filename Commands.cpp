@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <iomanip>
 #include "Commands.h"
-#include <sys/syslimits.h>
+#include <limits.h>
 
 using namespace std;
 
@@ -118,7 +118,7 @@ std::string removeBackgroundSign(const std::string cmd_line) {
 
 // TODO: Add your implementation for classes in Commands.h 
 
-void ChpromptCommand::execute() {
+void ChPromptCommand::execute() {
     if (m_argc == 1) {
         return;
     }
@@ -186,7 +186,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
     } else if (firstWord.compare("showpid") == 0) {
         return new ShowPidCommand(cmd_s);
     } else if (firstWord.compare("chprompt") == 0) {
-        return new ChpromptCommand(cmd_s);
+        return new ChPromptCommand(cmd_s);
     } else if (firstWord.compare("cd") == 0) {
         return new ChangeDirCommand(cmd_s, this->getLastPWD());
     } else if (firstWord.compare("jobs") == 0) {
