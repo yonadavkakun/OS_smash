@@ -228,8 +228,8 @@ void JobsList::removeFinishedJobs() {
         pid_t result = waitpid(iter->second.m_jobPID, &status, WNOHANG);
 
         if (result == -1) printError("waitpid");
-        else if (result == 0) ++iter;
-        else iter = m_jobs.erase(iter);
+        if (result <= 0) ++iter;
+        else iter = m_jobs.erase(iter); //TODO: make sure i dont want to remove failed jobs where waitpid() returned -1
     }
 }
 
@@ -258,7 +258,7 @@ void JobsList::killAllJobs() {
         std::cout << iter->second.m_jobPID << ": " << iter->second.m_jobCommandString << std::endl;
         int result = kill(iter->second.m_jobPID, SIGKILL);
         if (result == -1) printError("kill");
-        iter = m_jobs.erase(iter);
+        ++iter; //jobs will be removed anyway on next call for any method of JobsList
     }
 }
 
