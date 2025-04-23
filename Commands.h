@@ -16,9 +16,10 @@ protected:
     std::string m_cmd_line;
     int m_argc;
     std::string m_argv[COMMAND_MAX_ARGS+1];
+    bool m_isBackgroung;
 
 public:
-    Command(const char *cmd_line);
+    Command(const std::string cmd_line);
 
     virtual ~Command();
 
@@ -32,7 +33,7 @@ public:
 
 class BuiltInCommand : public Command {
 public:
-    BuiltInCommand(const char *cmd_line): Command(cmd_line) {};
+    BuiltInCommand(const std::string cmd_line): Command(cmd_line) {};
 
     virtual ~BuiltInCommand() {
     }
@@ -40,7 +41,7 @@ public:
 
 class ExternalCommand : public Command {
 public:
-    ExternalCommand(const char *cmd_line);
+    ExternalCommand(const std::string cmd_line);
 
     virtual ~ExternalCommand() {
     }
@@ -52,7 +53,7 @@ public:
 class RedirectionCommand : public Command {
     // TODO: Add your data members
 public:
-    explicit RedirectionCommand(const char *cmd_line);
+    explicit RedirectionCommand(const std::string cmd_line);
 
     virtual ~RedirectionCommand() {
     }
@@ -63,7 +64,7 @@ public:
 class PipeCommand : public Command {
     // TODO: Add your data members
 public:
-    PipeCommand(const char *cmd_line);
+    PipeCommand(const std::string cmd_line);
 
     virtual ~PipeCommand() {
     }
@@ -73,7 +74,7 @@ public:
 
 class DiskUsageCommand : public Command {
 public:
-    DiskUsageCommand(const char *cmd_line);
+    DiskUsageCommand(const std::string cmd_line);
 
     virtual ~DiskUsageCommand() {
     }
@@ -83,7 +84,7 @@ public:
 
 class WhoAmICommand : public Command {
 public:
-    WhoAmICommand(const char *cmd_line);
+    WhoAmICommand(const std::string cmd_line);
 
     virtual ~WhoAmICommand() {
     }
@@ -94,7 +95,7 @@ public:
 class NetInfo : public Command {
     // TODO: Add your data members **BONUS: 10 Points**
 public:
-    NetInfo(const char *cmd_line);
+    NetInfo(const std::string cmd_line);
 
     virtual ~NetInfo() {
     }
@@ -105,7 +106,7 @@ public:
 //cd: chdir(const char *path) --AND ALSO-- getcwd() ??? getpwd() probably
 class ChangeDirCommand : public BuiltInCommand {
     // TODO: Add your data members public:
-    ChangeDirCommand(const char *cmd_line, char **plastPwd);
+    ChangeDirCommand(const std::string cmd_line, char **plastPwd);
 
     virtual ~ChangeDirCommand() {
     }
@@ -116,7 +117,7 @@ class ChangeDirCommand : public BuiltInCommand {
 //pwd: getcwd(char *buf, size_t size)
 class GetCurrDirCommand : public BuiltInCommand {
 public:
-    GetCurrDirCommand(const char *cmd_line);
+    GetCurrDirCommand(const std::string cmd_line);
 
     virtual ~GetCurrDirCommand() {
     }
@@ -127,7 +128,7 @@ public:
 //showpid: getpid()
 class ShowPidCommand : public BuiltInCommand {
 public:
-    ShowPidCommand(const char *cmd_line);
+    ShowPidCommand(const std::string cmd_line);
 
     virtual ~ShowPidCommand() {
     }
@@ -138,7 +139,7 @@ public:
 class ChpromptCommand : public BuiltInCommand
 {
 public:
-    ChpromptCommand(const char *cmd_line) : BuiltInCommand(cmd_line) {}
+    ChpromptCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {}
     virtual ~ChpromptCommand() {}
     void execute() override;
 };
@@ -148,7 +149,7 @@ class JobsList;
 //quit
 class QuitCommand : public BuiltInCommand {
     // TODO: Add your data members public:
-    QuitCommand(const char *cmd_line, JobsList *jobs);
+    QuitCommand(const std::string cmd_line, JobsList *jobs);
 
     virtual ~QuitCommand() {
     }
@@ -206,7 +207,7 @@ public:
 class JobsCommand : public BuiltInCommand {
     // TODO: Add your data members
 public:
-    JobsCommand(const char *cmd_line, JobsList *jobs);
+    JobsCommand(const std::string cmd_line, JobsList *jobs);
 
     virtual ~JobsCommand() {
     }
@@ -218,7 +219,7 @@ public:
 class KillCommand : public BuiltInCommand {
     // TODO: Add your data members
 public:
-    KillCommand(const char *cmd_line, JobsList *jobs);
+    KillCommand(const std::string cmd_line, JobsList *jobs);
 
     virtual ~KillCommand() {
     }
@@ -230,7 +231,7 @@ public:
 class ForegroundCommand : public BuiltInCommand {
     // TODO: Add your data members
 public:
-    ForegroundCommand(const char *cmd_line, JobsList *jobs);
+    ForegroundCommand(const std::string cmd_line, JobsList *jobs);
 
     virtual ~ForegroundCommand() {
     }
@@ -241,7 +242,7 @@ public:
 //alias
 class AliasCommand : public BuiltInCommand {
 public:
-    AliasCommand(const char *cmd_line);
+    AliasCommand(const std::string cmd_line);
 
     virtual ~AliasCommand() {
     }
@@ -252,7 +253,7 @@ public:
 //unalias
 class UnAliasCommand : public BuiltInCommand {
 public:
-    UnAliasCommand(const char *cmd_line);
+    UnAliasCommand(const std::string cmd_line);
 
     virtual ~UnAliasCommand() {
     }
@@ -263,7 +264,7 @@ public:
 //unsetenv
 class UnSetEnvCommand : public BuiltInCommand {
 public:
-    UnSetEnvCommand(const char *cmd_line);
+    UnSetEnvCommand(const std::string cmd_line);
 
     virtual ~UnSetEnvCommand() {
     }
@@ -274,7 +275,7 @@ public:
 //watchproc
 class WatchProcCommand : public BuiltInCommand {
 public:
-    WatchProcCommand(const char *cmd_line);
+    WatchProcCommand(const std::string cmd_line);
 
     virtual ~WatchProcCommand() {
     }
@@ -304,7 +305,7 @@ public:
 
     ~SmallShell();
 
-    void executeCommand(const char *cmd_line);
+    void executeCommand(const std::string cmd_line);
 
     // TODO: add extra methods as needed
     std::string getPrompt();

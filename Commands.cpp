@@ -82,6 +82,22 @@ void _removeBackgroundSign(char *cmd_line) {
     cmd_line[str.find_last_not_of(WHITESPACE, idx) + 1] = 0;
 }
 
+std::string removeBackgroundSign(const std::string cmd_line) {
+    std::string result = cmd_line;
+    result = _trim(result);
+
+    size_t idx = result.find_last_not_of(WHITESPACE);
+    if (idx == std::string::npos || result[idx] != '&') {
+        return result;  // unchanged
+    }
+
+    // Remove '&' and trim trailing whitespace
+    result[idx] = ' ';
+    size_t newEnd = result.find_last_not_of(WHITESPACE, idx);
+    return result.substr(0, newEnd + 1);
+}
+
+
 // TODO: Add your implementation for classes in Commands.h 
 
 void ChpromptCommand::execute() {
@@ -143,36 +159,40 @@ void ChangeDirCommand::execute() {
 */
 Command *SmallShell::CreateCommand(const char *cmd_line) {
     // For example:
-    string cmd_s = _trim(string(cmd_line));
-    string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
+    std::string cmdLineString(cmd_line);
+    std::string cmd_s = _trim(string(cmd_line));
+    std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
+    firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
+    // std::string cleanCmdLineNoBG = removeBackgroundSign(cmd_s);
+
 
     if (firstWord.compare("pwd") == 0) {
-        return new GetCurrDirCommand(cmd_line);
+        return new GetCurrDirCommand(cmdLineString);
     } else if (firstWord.compare("showpid") == 0) {
-        return new ShowPidCommand(cmd_line);
+        return new ShowPidCommand(cmdLineString);
     } else if (firstWord.compare("chprompt") == 0) {
-        return new ChpromptCommand(cmd_line);
+        return new ChpromptCommand(cmdLineString);
     } else if (firstWord.compare("cd") == 0) {
-        return new ChangeDirCommand(cmd_line);
+        return new ChangeDirCommand(cmdLineString);
     } else if (firstWord.compare("jobs") == 0) {
         //return
-        return new JobsCommand(cmd_line);
+        return new JobsCommand(cmdLineString);
     } else if (firstWord.compare("fg") == 0) {
-        return new ForegroundCommand(cmd_line);
+        return new ForegroundCommand(cmdLineString);
     } else if (firstWord.compare("quit") == 0) {
-        return new QuitCommand(cmd_line);
+        return new QuitCommand(cmdLineString);
     } else if (firstWord.compare("kill") == 0) {
-        return new KillCommand(cmd_line);
+        return new KillCommand(cmdLineString);
     } else if (firstWord.compare("alias") == 0) {
-        return new AliasCommand(cmd_line);
+        return new AliasCommand(cmdLineString);
     } else if (firstWord.compare("unalias") == 0) {
-        return new UnAliasCommand(cmd_line);
+        return new UnAliasCommand(cmdLineString);
     } else if (firstWord.compare("unsetenv") == 0) {
-        return new UnSetEnvCommand(cmd_line);
+        return new UnSetEnvCommand(cmdLineString);
     } else if (firstWord.compare("watchproc") == 0) {
-        return new WatchProcCommand(cmd_line);
+        return new WatchProcCommand(cmdLineString);
     } else {
-        return new ExternalCommand(cmd_line);
+        return new ExternalCommand(cmdLineString);
     }
     return nullptr;
 }
@@ -301,6 +321,13 @@ JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
 }
 
 //--------------------COMMAND CLASS!!!!!--------------------//
+Command::Command(const char *cmd_line) {
+
+}
+
+
+
+
 std::string Command::getCmdLine() {
     return this->m_cmd_line;
 }
