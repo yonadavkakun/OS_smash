@@ -7,6 +7,8 @@
 #include <iomanip>
 #include "Commands.h"
 #include <limits.h>
+#include <unordered_set>
+#include <bits/regex.h>
 
 using namespace std;
 
@@ -169,13 +171,52 @@ void ChangeDirCommand::execute() {
 void AliasCommand::execute() {
     SmallShell &smash = SmallShell::getInstance();
     if (m_argc == 1) {
-        //only alias
-        for (const auto &p: smash.alias_map)
+        //only alias without args print aliasMap
+        for (const auto &p: smash.m_aliasMap)
             std::cout << p.first << "='" << p.second << "'" << std::endl;
         return;
     }
+    //check validation of args
+    std::string stripped = m_cmdLine.substr(
+        m_cmdLine.find("alias") + 5);
+    std::regex rx("^\\s*([A-Za-z0-9_]+)='([^']*)'\\s*$");
+    std::smatch m;
+    if(!std::regex_match(stripped, m, rx)) {
+        std::cerr << "smash error: alias: invalid alias format" << std::endl;
+        return;
+    }
+    std::string name = m[1], cmd = m[2];
+    static const unordered_set<std::string> reserved = {
+        "quit","jobs","fg","bg","cd","pwd","showpid","kill",
+        "alias","unalias","watchproc","unsetenv","chprompt"
+    };
+    if(smash.m_aliasMap.count(name) || reserved.count(name)) {
+        std::cerr << "smash error: alias: " << name
+                  << " already exists or is a reserved command" << std::endl;
+        return;
+    }
+    smash.m_aliasMap[name] = cmd;
+
 }
 
+void UnAliasCommand::execute() {
+    SmallShell& smash = SmallShell::getInstance();
+    if (m_argc == 1) {
+        cerr << "smash error: unalias: not enough arguments" << std::endl;
+        return;
+    }
+    if (m_argc > 2) {
+        for (int i = 1; i < m_argc; i++) {
+            string name = m_argv[i];
+            auto iter = smash.m_aliasMap.find(name);
+            if (iter == smash.m_aliasMap.end()) {
+                cerr << "smash error: unalias: "<< name <<" alias does not exist" << std::endl;
+            }
+            return;
+            smash.m_aliasMap.erase(iter);
+        }
+    }
+}
 
 //--------------------SMASH CLASS!!!!!--------------------//
 /**
@@ -188,11 +229,46 @@ SmallShell::~SmallShell() {
     // TODO: add your implementation
 }
 
+std::string SmallShell::aliasCheck(std::string cmd_line) {
+    string cmd_s=cmd_line;
+    std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
+    firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
+    auto iter = m_aliasMap.find(firstWord);
+    if (iter!=m_aliasMap.end()) {
+        cmd_s=iter->second;
+    }
+    return cmd_s;
+}
+
+bool SmallShell::isAlias(std::string cmd_line) {
+    std::string firstWord = cmd_line.substr(0, cmd_line.find_first_of(" \n"));
+    firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
+    auto iter = m_aliasMap.find(firstWord);
+    if (iter!=m_aliasMap.end()) {
+        return true;
+    }
+    return false;
+}
+
+std::string SmallShell::fixAliasCmdLine(std::string cmd_line) {
+    string cmd_s;
+    std::string firstWord = cmd_line.substr(0, cmd_line.find_first_of(" \n"));
+    firstWord = removeBackgroundSign(firstWord);
+    std::string rest = cmd_line.substr(cmd_line.find_first_of(" \n")+1, cmd_line.length());
+    firstWord = m_aliasMap.find(firstWord)->second;
+    return firstWord + rest;
+    //TODO: check & rules
+}
+
 Command* SmallShell::CreateCommand(const char *cmd_line) {
     // For example:
     std::string cmd_s = _trim(string(cmd_line));
+    if (isAlias(cmd_s)) {
+        cmd_s = fixAliasCmdLine(cmd_s);
+    }
     std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
     firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
+
 
     if (firstWord.compare("pwd") == 0) {
         return new GetCurrDirCommand(cmd_s);
@@ -296,6 +372,7 @@ void JobsList::killAllJobs() {
         if (result == -1) printError("kill");
         ++iter; //jobs will be removed anyway on next call for any method of JobsList
     }
+    this->removeFinishedJobs();// not sure if needed
 }
 
 JobsList::JobEntry* JobsList::getJobById(int jobId) {
@@ -338,10 +415,10 @@ JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
 
 //--------------------COMMAND CLASS!!!!!--------------------//
 Command::Command(const std::string cmd_line) {
-    this->m_cmdLine = removeBackgroundSign(cmd_line);
+    std::string cleanLine = _trim(removeBackgroundSign(cmd_line));
+    this->m_cmdLine = cleanLine;
     this->m_argc = parseCommandLine(cmd_line, this->m_argv);
     this->m_isBackgroundCommand = isBackgroundCommand(cmd_line);
-
 }
 
 bool Command::getIsBackgroundCommand() {

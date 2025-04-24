@@ -4,6 +4,7 @@
 
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -41,7 +42,13 @@ public:
     virtual ~ExternalCommand() {}
     void execute() override;
 };
-
+//Eitan added ComplexExternalCommand
+class ComplexExternalCommand : public Command {
+public:
+    ComplexExternalCommand(const std::string cmd_line) : Command(cmd_line) {};;
+    virtual ~ComplexExternalCommand() {}
+    void execute() override;
+};
 
 class RedirectionCommand : public Command {
     // TODO: Add your data members
@@ -151,7 +158,7 @@ public:
 
     JobEntry* getJobById(int jobId); //remember returns nullptr if doesnt exist.
 
-    void removeJobById(int jobId); // TODO: ask
+    void removeJobById(int jobId);
 
     JobEntry* getLastJob(int* lastJobId);
 
@@ -239,6 +246,8 @@ private:
     SmallShell();
 
 public:
+    std::unordered_map<std::string, std::string> m_aliasMap;
+
     SmallShell(SmallShell const &) = delete; // disable copy ctor
     void operator=(SmallShell const &) = delete; // disable = operator
     static SmallShell& getInstance() // make SmallShell singleton
@@ -258,6 +267,9 @@ public:
     JobsList* getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
     std::string getLastPWD();
     void setLastPWD(std::string value);
+    std::string aliasCheck(std::string cmd_line);
+    bool isAlias(std::string cmd_line);
+    std::string fixAliasCmdLine(std::string cmd_line);
 };
 
 #endif //SMASH_COMMAND_H_
