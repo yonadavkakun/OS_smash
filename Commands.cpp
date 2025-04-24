@@ -166,6 +166,16 @@ void ChangeDirCommand::execute() {
     SmallShell::getInstance().setLastPWD(cwd);
 }
 
+void AliasCommand::execute() {
+    SmallShell &smash = SmallShell::getInstance();
+    if (m_argc == 1) {
+        //only alias
+        for (const auto &p: smash.alias_map)
+            std::cout << p.first << "='" << p.second << "'" << std::endl;
+        return;
+    }
+}
+
 
 //--------------------SMASH CLASS!!!!!--------------------//
 /**
