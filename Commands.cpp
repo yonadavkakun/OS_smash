@@ -160,7 +160,7 @@ void ChangeDirCommand::execute() {
         return;
     }
     if (chdir(newPath.c_str()) == -1) {
-        perror("smash error: chdir failed");
+        printError("chdir");
         return;
     }
     SmallShell::getInstance().setLastPWD(cwd);
