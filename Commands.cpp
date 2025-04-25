@@ -64,9 +64,6 @@ int parseCommandLine(const std::string& cmd_line, std::vector<std::string>* args
     for (std::string token; iss >> token;) {
         argsVector->push_back(token);
         i++;
-        if (i < COMMAND_MAX_ARGS+1) {
-            args[i] = "";
-        }
     }
     return i;
 
