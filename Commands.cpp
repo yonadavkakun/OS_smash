@@ -57,20 +57,19 @@ int _parseCommandLine(const char *cmd_line, char **args) {
 
     FUNC_EXIT()
 }
-int parseCommandLine(const std::string& cmd_line, std::string* args) {
+int parseCommandLine(const std::string& cmd_line, std::vector<std::string>* argsVector) {
     FUNC_ENTRY();
-    std::istringstream iss(_trim(cmd_line));
-    std::string token;
     int i = 0;
-
-    while (iss >> token && i < COMMAND_MAX_ARGS+1) {
-        args[i] = token;
+    std::istringstream iss(_trim(cmd_line));
+    for (std::string token; iss >> token;) {
+        argsVector->push_back(token);
         i++;
         if (i < COMMAND_MAX_ARGS+1) {
             args[i] = "";
         }
     }
     return i;
+
     FUNC_EXIT();
 }
 

@@ -15,8 +15,8 @@ class Command {
     // TODO: Add your data members
 protected:
     std::string m_cmdLine;
+    std::vector<std::string> m_argv;
     int m_argc;
-    std::string m_argv[COMMAND_MAX_ARGS+1];
     bool m_isBackgroundCommand;
 public:
     Command(const std::string cmd_line);
