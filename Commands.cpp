@@ -209,7 +209,6 @@ void UnAliasCommand::execute() {
                 cerr << "smash error: unalias: "<< name <<" alias does not exist" << std::endl;
                 continue;
             }
-            return;
             smash.m_aliasMap.erase(iter);
         }
     }
