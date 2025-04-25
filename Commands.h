@@ -79,6 +79,8 @@ private:
     std::string m_prompt = "smash";
     JobsList m_jobsList;
     std::string m_lastPWD;
+    pid_t m_FgProcPID = -1;
+
     SmallShell();
 
 public:
@@ -98,14 +100,20 @@ public:
     void executeCommand(const char *cmd_line);
 
     // TODO: add extra methods as needed
+
     std::string getPrompt();
     void setPrompt(std::string value);
-    JobsList* getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
     std::string getLastPWD();
     void setLastPWD(std::string value);
-    std::string aliasCheck(std::string cmd_line);
+    pid_t getFgProcPID();
+    void setFgProcPID(pid_t pid);
+    JobsList* getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
+
+
     bool isAlias(std::string cmd_line);
     std::string fixAliasCmdLine(std::string cmd_line);
+
+
 };
 
 
