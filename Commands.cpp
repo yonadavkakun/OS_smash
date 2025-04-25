@@ -25,12 +25,15 @@ const std::string WHITESPACE = " \n\r\t\f\v";
 #endif
 
 //--------------------OWN HELPERS--------------------//
+#pragma region OWN HELPERS
 void printError(std::string sysCallName) {
     std::string errorText = "smash error: " + sysCallName + " failed";
     perror(errorText.c_str());
 }
+#pragma endregion
 
 //--------------------GIVEN HELPERS--------------------//
+#pragma region GIVEN HELPERS
 string _ltrim(const std::string &s) {
     size_t start = s.find_first_not_of(WHITESPACE);
     return (start == std::string::npos) ? "" : s.substr(start);
@@ -109,8 +112,10 @@ std::string removeBackgroundSign(const std::string cmd_line) {
     size_t newEnd = result.find_last_not_of(WHITESPACE, idx);
     return result.substr(0, newEnd + 1);
 }
+#pragma endregion
 
 //--------------------COMMAND::EXECUTE()--------------------//
+#pragma region COMMAND::EXECUTE()
 void ChPromptCommand::execute() {
     if (m_argc == 1) {
         return;
@@ -282,9 +287,10 @@ void UnSetEnvCommand::execute() {}
 
 //TODO:
 void WatchProcCommand::execute() {}
+#pragma endregion
 
-
-//--------------------SMASH CLASS!!!!!--------------------//
+//--------------------SMASH CLASS--------------------//
+#pragma region SMASH CLASS
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
 */
@@ -383,8 +389,10 @@ std::string SmallShell::fixAliasCmdLine(std::string cmd_line) {
     return firstWord + rest;
     //TODO: check & rules
 }
+#pragma endregion
 
-//--------------------JOBSLIST CLASS!!!!!--------------------//
+//--------------------JOBSLIST CLASS--------------------//
+#pragma region JOBSLIST CLASS
 int JobsList::calcNewID() {
     if (m_jobs.size() == 0) return 1;
     auto last = --m_jobs.end();
@@ -470,8 +478,10 @@ JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
     *jobId = iterReversed->second.m_jobID;
     return &iterReversed->second;
 }
+#pragma endregion
 
-//--------------------COMMAND CLASS!!!!!--------------------//
+//--------------------COMMAND CLASS--------------------//
+#pragma region COMMAND CLASS
 Command::Command(const std::string cmd_line) {
     std::string cleanLine = _trim(removeBackgroundSign(cmd_line));
     this->m_cmdLine = cleanLine;
@@ -492,4 +502,4 @@ std::string Command::getCmdLineFull() {
     }
     return this->m_cmdLine;
 }
-
+#pragma endregion
