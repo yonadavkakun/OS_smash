@@ -214,6 +214,42 @@ void UnAliasCommand::execute() {
     }
 }
 
+void ForegroundCommand::execute() {
+    int jobId;
+    JobsList::JobEntry* job = this->m_jobsListPtr->getLastJob(&jobId);
+
+    //taking care of no args case error, if JobsList is empty we get nullptr from getLastJob(&jobId)
+    if (this->m_argc == 1 && job == nullptr) {
+        std::cout << "smash error: fg: jobs list is empty" << std::endl;
+        return;
+    }
+    //if we have arguments we need to fix the values to the correct ones. ELSE WE ALREADY GOT THEM!
+    if (this->m_argc != 1) {
+        //taking care of too many arguments.
+        if (this->m_argc > 2) {
+            std::cout << "smash error: fg: invalid arguments" << std::endl;
+            return;
+        }
+        //here we get for sure 2 arguments - extracting the jobId StoI
+        try {
+            jobId = stoi((this->m_argv[1]));
+        } catch (const std::invalid_argument& error) {
+            std::cout << "smash error: fg: invalid arguments" << std::endl;
+            return;
+        }
+        //here we extracted a jobId successfully
+        job = this->m_jobsListPtr->getJobById(jobId);
+        if (job == nullptr) {
+            std::cout << "smash error: fg: job-id " << jobId << " does not exist" << std::endl;
+            return;
+        }
+    }
+
+    //up to here all errors are handled. WE GOT CORRECT VALUES FOR THE JOB!
+    //TODO: add logic of command
+
+}
+
 //--------------------SMASH CLASS!!!!!--------------------//
 /**
 * Creates and returns a pointer to Command class which matches the given command line (cmd_line)
