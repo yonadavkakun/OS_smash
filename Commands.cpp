@@ -449,7 +449,7 @@ JobsList::JobEntry* JobsList::getLastStoppedJob(int *jobId) {
 Command::Command(const std::string cmd_line) {
     std::string cleanLine = _trim(removeBackgroundSign(cmd_line));
     this->m_cmdLine = cleanLine;
-    this->m_argc = parseCommandLine(cmd_line, this->m_argv);
+    this->m_argc = parseCommandLine(cmd_line, &this->m_argv);
     this->m_isBackgroundCommand = isBackgroundCommand(cmd_line);
 }
 
