@@ -219,36 +219,54 @@ void ForegroundCommand::execute() {
     int jobId;
     JobsList::JobEntry* job = this->m_jobsListPtr->getLastJob(&jobId);
 
+    //ERROR HANDLING + VALUE EXTRACTION
     //taking care of no args case error, if JobsList is empty we get nullptr from getLastJob(&jobId)
     if (this->m_argc == 1 && job == nullptr) {
-        std::cout << "smash error: fg: jobs list is empty" << std::endl;
+        std::cerr << "smash error: fg: jobs list is empty" << std::endl;
         return;
     }
     //if we have arguments we need to fix the values to the correct ones. ELSE WE ALREADY GOT THEM!
     if (this->m_argc != 1) {
         //taking care of too many arguments.
         if (this->m_argc > 2) {
-            std::cout << "smash error: fg: invalid arguments" << std::endl;
+            std::cerr << "smash error: fg: invalid arguments" << std::endl;
             return;
         }
         //here we get for sure 2 arguments - extracting the jobId StoI
         try {
             jobId = stoi((this->m_argv[1]));
         } catch (const std::invalid_argument& error) {
-            std::cout << "smash error: fg: invalid arguments" << std::endl;
+            std::cerr << "smash error: fg: invalid arguments" << std::endl;
             return;
         }
         //here we extracted a jobId successfully
         job = this->m_jobsListPtr->getJobById(jobId);
         if (job == nullptr) {
-            std::cout << "smash error: fg: job-id " << jobId << " does not exist" << std::endl;
+            std::cerr << "smash error: fg: job-id " << jobId << " does not exist" << std::endl;
             return;
         }
     }
 
-    //up to here all errors are handled. WE GOT CORRECT VALUES FOR THE JOB!
-    //TODO: add logic of command
+    //WE GOT CORRECT VALUES FOR THE JOB! -----> COMMAND LOGIC
+    pid_t pid = job->m_jobPID;
+    SmallShell::getInstance().setFgProcPID(pid);
+    std::cout << job->m_jobCommandString << " " << pid << std::endl;
 
+    // const pid_t smashPID = getpid();
+    // //give terminal control to the job
+    // tcsetpgrp(STDIN_FILENO, pid);
+    // //send SIGCONT in case process is stopped
+    // if (kill(pid, SIGCONT) == -1) printError("kill");
+    // //wait process to finish
+    // int status;
+    // if (waitpid(pid, &status, 0) == -1) printError("waitpid");
+    // //after process in finished - return terminal control to the shell
+    // tcsetpgrp(STDIN_FILENO, smashPID);
+
+    if (waitpid(pid, nullptr, 0) == -1) printError("waitpid");
+
+    SmallShell::getInstance().setFgProcPID(-1);
+    this->m_jobsListPtr->removeJobById(jobId);
 }
 
 //--------------------SMASH CLASS!!!!!--------------------//
@@ -260,37 +278,6 @@ SmallShell::SmallShell() {
 }
 SmallShell::~SmallShell() {
     // TODO: add your implementation
-}
-
-std::string SmallShell::aliasCheck(std::string cmd_line) {
-    string cmd_s=cmd_line;
-    std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
-    firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
-    auto iter = m_aliasMap.find(firstWord);
-    if (iter!=m_aliasMap.end()) {
-        cmd_s=iter->second;
-    }
-    return cmd_s;
-}
-
-bool SmallShell::isAlias(std::string cmd_line) {
-    std::string firstWord = cmd_line.substr(0, cmd_line.find_first_of(" \n"));
-    firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
-    auto iter = m_aliasMap.find(firstWord);
-    if (iter!=m_aliasMap.end()) {
-        return true;
-    }
-    return false;
-}
-
-std::string SmallShell::fixAliasCmdLine(std::string cmd_line) {
-    string cmd_s;
-    std::string firstWord = cmd_line.substr(0, cmd_line.find_first_of(" \n"));
-    firstWord = removeBackgroundSign(firstWord);
-    std::string rest = cmd_line.substr(cmd_line.find_first_of(" \n")+1, cmd_line.length());
-    firstWord = m_aliasMap.find(firstWord)->second;
-    return firstWord + rest;
-    //TODO: check & rules
 }
 
 Command* SmallShell::CreateCommand(const char *cmd_line) {
@@ -340,23 +327,46 @@ void SmallShell::executeCommand(const char *cmd_line) {
 
     //Please note that you must fork smash process for some commands (e.g., external commands....)
 }
-
+//GET-SET
 std::string SmallShell::getPrompt() {
     return this->m_prompt;
 }
 void SmallShell::setPrompt(std::string value) {
     this->m_prompt = value;
 }
-
 std::string SmallShell::getLastPWD() {
     return this->m_lastPWD;
 }
 void SmallShell::setLastPWD(std::string value) {
     this->m_lastPWD = value;
 }
-
+pid_t SmallShell::getFgProcPID() {
+    return this->m_FgProcPID;
+}
+void SmallShell::setFgProcPID(pid_t pid) {
+    this->m_FgProcPID = pid;
+}
 JobsList* SmallShell::getJobsList() {
     return &this->m_jobsList;
+}
+//ALIAS HANDLING
+bool SmallShell::isAlias(std::string cmd_line) {
+    std::string firstWord = cmd_line.substr(0, cmd_line.find_first_of(" \n"));
+    firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
+    auto iter = m_aliasMap.find(firstWord);
+    if (iter!=m_aliasMap.end()) {
+        return true;
+    }
+    return false;
+}
+std::string SmallShell::fixAliasCmdLine(std::string cmd_line) {
+    string cmd_s;
+    std::string firstWord = cmd_line.substr(0, cmd_line.find_first_of(" \n"));
+    firstWord = removeBackgroundSign(firstWord);
+    std::string rest = cmd_line.substr(cmd_line.find_first_of(" \n")+1, cmd_line.length());
+    firstWord = m_aliasMap.find(firstWord)->second;
+    return firstWord + rest;
+    //TODO: check & rules
 }
 
 //--------------------JOBSLIST CLASS!!!!!--------------------//
@@ -381,7 +391,7 @@ void JobsList::removeFinishedJobs() {
 void JobsList::addJob(Command *cmd, bool isStopped, pid_t jobPID) {
     this->removeFinishedJobs();
     int uniqueID = calcNewID();
-    std::string cmdLine = cmd->getCmdLine();
+    std::string cmdLine = cmd->getCmdLineFull();
     JobEntry newJob(cmdLine, jobPID, uniqueID, isStopped);
     m_jobs.insert({uniqueID, newJob});
 }
