@@ -11,6 +11,8 @@
 #define COMMAND_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 
+
+
 class Command {
     // TODO: Add your data members
 protected:
@@ -30,6 +32,82 @@ public:
     //virtual void cleanup();
     // TODO: Add your extra methods if needed
 };
+class JobsList {
+public:
+    class JobEntry {
+    public:
+        std::string m_jobCommandString;
+        pid_t m_jobPID;
+        int m_jobID;
+        bool m_isStopped;
+
+        JobEntry(std::string commandString, pid_t PID, int ID, bool isStopped) : m_jobCommandString(commandString), m_jobPID(PID), m_jobID(ID), m_isStopped(isStopped) {};
+    };
+
+private:
+    std::map<int, JobEntry> m_jobs;
+
+
+public:
+    int calcNewID();
+
+    JobsList();
+
+    ~JobsList();
+
+    void addJob(Command* cmd, bool isStopped = false, pid_t jobPID);
+
+    void printJobsList();
+
+    void killAllJobs();
+
+    void removeFinishedJobs();
+
+    JobEntry* getJobById(int jobId); //remember returns nullptr if doesnt exist.
+
+    void removeJobById(int jobId);
+
+    JobEntry* getLastJob(int* lastJobId);
+
+    JobEntry* getLastStoppedJob(int* jobId);
+
+    // TODO: Add extra methods or modify exisitng ones as needed
+};
+class SmallShell {
+private:
+    // TODO: Add your data members
+    std::string m_prompt = "smash";
+    JobsList m_jobsList;
+    std::string m_lastPWD;
+    SmallShell();
+
+public:
+    std::unordered_map<std::string, std::string> m_aliasMap;
+
+    SmallShell(SmallShell const &) = delete; // disable copy ctor
+    void operator=(SmallShell const &) = delete; // disable = operator
+    static SmallShell& getInstance() // make SmallShell singleton
+    {
+        static SmallShell instance; // Guaranteed to be destroyed.
+        // Instantiated on first use.
+        return instance;
+    }
+    ~SmallShell();
+
+    Command* CreateCommand(const char *cmd_line);
+    void executeCommand(const char *cmd_line);
+
+    // TODO: add extra methods as needed
+    std::string getPrompt();
+    void setPrompt(std::string value);
+    JobsList* getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
+    std::string getLastPWD();
+    void setLastPWD(std::string value);
+    std::string aliasCheck(std::string cmd_line);
+    bool isAlias(std::string cmd_line);
+    std::string fixAliasCmdLine(std::string cmd_line);
+};
+
 
 class BuiltInCommand : public Command {
 public:
@@ -114,8 +192,6 @@ public:
     virtual ~ChPromptCommand() {}
     void execute() override;
 };
-
-class JobsList;
 //quit
 class QuitCommand : public BuiltInCommand {
     // TODO: Add your data members public:
@@ -124,47 +200,6 @@ public:
     QuitCommand(const std::string cmd_line, JobsList* jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
     virtual ~QuitCommand() {}
     void execute() override;
-};
-class JobsList {
-public:
-    class JobEntry {
-    public:
-        std::string m_jobCommandString;
-        pid_t m_jobPID;
-        int m_jobID;
-        bool m_isStopped;
-
-        JobEntry(std::string commandString, pid_t PID, int ID, bool isStopped) : m_jobCommandString(commandString), m_jobPID(PID), m_jobID(ID), m_isStopped(isStopped) {};
-    };
-
-private:
-    std::map<int, JobEntry> m_jobs;
-
-
-public:
-    int calcNewID();
-
-    JobsList();
-
-    ~JobsList();
-
-    void addJob(Command* cmd, bool isStopped = false, pid_t jobPID);
-
-    void printJobsList();
-
-    void killAllJobs();
-
-    void removeFinishedJobs();
-
-    JobEntry* getJobById(int jobId); //remember returns nullptr if doesnt exist.
-
-    void removeJobById(int jobId);
-
-    JobEntry* getLastJob(int* lastJobId);
-
-    JobEntry* getLastStoppedJob(int* jobId);
-
-    // TODO: Add extra methods or modify exisitng ones as needed
 };
 //jobs
 //No direct system calls needed.
@@ -237,39 +272,5 @@ public:
     void execute() override;
 };
 
-class SmallShell {
-private:
-    // TODO: Add your data members
-    std::string m_prompt = "smash";
-    JobsList m_jobsList;
-    std::string m_lastPWD;
-    SmallShell();
-
-public:
-    std::unordered_map<std::string, std::string> m_aliasMap;
-
-    SmallShell(SmallShell const &) = delete; // disable copy ctor
-    void operator=(SmallShell const &) = delete; // disable = operator
-    static SmallShell& getInstance() // make SmallShell singleton
-    {
-        static SmallShell instance; // Guaranteed to be destroyed.
-        // Instantiated on first use.
-        return instance;
-    }
-    ~SmallShell();
-
-    Command* CreateCommand(const char *cmd_line);
-    void executeCommand(const char *cmd_line);
-
-    // TODO: add extra methods as needed
-    std::string getPrompt();
-    void setPrompt(std::string value);
-    JobsList* getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
-    std::string getLastPWD();
-    void setLastPWD(std::string value);
-    std::string aliasCheck(std::string cmd_line);
-    bool isAlias(std::string cmd_line);
-    std::string fixAliasCmdLine(std::string cmd_line);
-};
 
 #endif //SMASH_COMMAND_H_
