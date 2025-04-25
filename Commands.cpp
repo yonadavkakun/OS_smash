@@ -183,7 +183,7 @@ void AliasCommand::execute() {
     }
     std::string name = m[1], cmd = m[2];
     static const unordered_set<std::string> reserved = {
-        "quit","jobs","fg","bg","cd","pwd","showpid","kill",
+        "quit","jobs","fg","cd","pwd","showpid","kill",
         "alias","unalias","watchproc","unsetenv","chprompt"
     };
     if(smash.m_aliasMap.count(name) || reserved.count(name)) {
