@@ -137,53 +137,12 @@ public:
 };
 
 
-class RedirectionCommand : public Command {
-    // TODO: Add your data members
+//chprompt
+class ChPromptCommand : public BuiltInCommand
+{
 public:
-    explicit RedirectionCommand(const std::string cmd_line);
-    virtual ~RedirectionCommand() {}
-    void execute() override;
-};
-class PipeCommand : public Command {
-    // TODO: Add your data members
-public:
-    PipeCommand(const std::string cmd_line);
-    virtual ~PipeCommand() {}
-    void execute() override;
-};
-class DiskUsageCommand : public Command {
-public:
-    DiskUsageCommand(const std::string cmd_line) : Command(cmd_line) {};
-    virtual ~DiskUsageCommand() {}
-    void execute() override;
-};
-class WhoAmICommand : public Command {
-public:
-    WhoAmICommand(const std::string cmd_line) : Command(cmd_line) {};
-    virtual ~WhoAmICommand() {}
-    void execute() override;
-};
-class NetInfo : public Command {
-    // TODO: Add your data members **BONUS: 10 Points**
-public:
-    NetInfo(const std::string cmd_line);
-    virtual ~NetInfo() {}
-    void execute() override;
-};
-//cd
-class ChangeDirCommand : public BuiltInCommand {
-public:
-    std::string m_preChangePWD;
-    ChangeDirCommand(const std::string cmd_line) = delete;
-    ChangeDirCommand(const std::string cmd_line, std::string plastPwd) : BuiltInCommand(cmd_line) {m_preChangePWD = plastPwd;};
-    virtual ~ChangeDirCommand() {}
-    void execute() override;
-};
-//pwd
-class GetCurrDirCommand : public BuiltInCommand {
-public:
-    GetCurrDirCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
-    virtual ~GetCurrDirCommand() {}
+    ChPromptCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {}
+    virtual ~ChPromptCommand() {}
     void execute() override;
 };
 //showpid
@@ -193,21 +152,20 @@ public:
     virtual ~ShowPidCommand() {}
     void execute() override;
 };
-//chprompt
-class ChPromptCommand : public BuiltInCommand
-{
+//pwd
+class GetCurrDirCommand : public BuiltInCommand {
 public:
-    ChPromptCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {}
-    virtual ~ChPromptCommand() {}
+    GetCurrDirCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
+    virtual ~GetCurrDirCommand() {}
     void execute() override;
 };
-//quit
-class QuitCommand : public BuiltInCommand {
-    // TODO: Add your data members public:
-    JobsList* m_jobsListPtr;
+//cd
+class ChangeDirCommand : public BuiltInCommand {
 public:
-    QuitCommand(const std::string cmd_line, JobsList* jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
-    virtual ~QuitCommand() {}
+    std::string m_preChangePWD;
+    ChangeDirCommand(const std::string cmd_line) = delete;
+    ChangeDirCommand(const std::string cmd_line, std::string plastPwd) : BuiltInCommand(cmd_line) {m_preChangePWD = plastPwd;};
+    virtual ~ChangeDirCommand() {}
     void execute() override;
 };
 //jobs
@@ -222,6 +180,24 @@ public:
     virtual ~JobsCommand() {}
     void execute() override;
 };
+//fg
+class ForegroundCommand : public BuiltInCommand {
+    // TODO: Add your data members
+    JobsList* m_jobsListPtr;
+public:
+    ForegroundCommand(const std::string cmd_line, JobsList* jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
+    virtual ~ForegroundCommand() {}
+    void execute() override;
+};
+//quit
+class QuitCommand : public BuiltInCommand {
+    // TODO: Add your data members public:
+    JobsList* m_jobsListPtr;
+public:
+    QuitCommand(const std::string cmd_line, JobsList* jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
+    virtual ~QuitCommand() {}
+    void execute() override;
+};
 //kill
 class KillCommand : public BuiltInCommand {
     // TODO: Add your data members
@@ -229,15 +205,6 @@ class KillCommand : public BuiltInCommand {
 public:
     KillCommand(const std::string cmd_line, JobsList* jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
     virtual ~KillCommand() {}
-    void execute() override;
-};
-//fg: waitpid(pid, 0, 0)
-class ForegroundCommand : public BuiltInCommand {
-    // TODO: Add your data members
-    JobsList* m_jobsListPtr;
-public:
-    ForegroundCommand(const std::string cmd_line, JobsList* jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
-    virtual ~ForegroundCommand() {}
     void execute() override;
 };
 //alias
@@ -281,5 +248,40 @@ public:
     void execute() override;
 };
 
+
+//Special Commands
+class RedirectionCommand : public Command {
+    // TODO: Add your data members
+public:
+    explicit RedirectionCommand(const std::string cmd_line);
+    virtual ~RedirectionCommand() {}
+    void execute() override;
+};
+class PipeCommand : public Command {
+    // TODO: Add your data members
+public:
+    PipeCommand(const std::string cmd_line);
+    virtual ~PipeCommand() {}
+    void execute() override;
+};
+class DiskUsageCommand : public Command {
+public:
+    DiskUsageCommand(const std::string cmd_line) : Command(cmd_line) {};
+    virtual ~DiskUsageCommand() {}
+    void execute() override;
+};
+class WhoAmICommand : public Command {
+public:
+    WhoAmICommand(const std::string cmd_line) : Command(cmd_line) {};
+    virtual ~WhoAmICommand() {}
+    void execute() override;
+};
+class NetInfo : public Command {
+    // TODO: Add your data members **BONUS: 10 Points**
+public:
+    NetInfo(const std::string cmd_line);
+    virtual ~NetInfo() {}
+    void execute() override;
+};
 
 #endif //SMASH_COMMAND_H_

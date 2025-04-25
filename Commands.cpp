@@ -29,6 +29,7 @@ void printError(std::string sysCallName) {
     std::string errorText = "smash error: " + sysCallName + " failed";
     perror(errorText.c_str());
 }
+
 //--------------------GIVEN HELPERS--------------------//
 string _ltrim(const std::string &s) {
     size_t start = s.find_first_not_of(WHITESPACE);
@@ -109,8 +110,7 @@ std::string removeBackgroundSign(const std::string cmd_line) {
     return result.substr(0, newEnd + 1);
 }
 
-
-// TODO: Add your implementation for classes in Commands.h
+//--------------------COMMAND::EXECUTE()--------------------//
 void ChPromptCommand::execute() {
     if (m_argc == 1) {
         return;
@@ -163,56 +163,8 @@ void ChangeDirCommand::execute() {
     SmallShell::getInstance().setLastPWD(cwd);
 }
 
-void AliasCommand::execute() {
-    SmallShell &smash = SmallShell::getInstance();
-    if (m_argc == 1) {
-        //only alias without args print aliasMap
-        for (const auto &p: smash.m_aliasMap)
-            std::cout << p.first << "='" << p.second << "'" << std::endl;
-        return;
-    }
-    //check validation of args
-    std::string stripped = m_cmdLine.substr(
-        m_cmdLine.find("alias") + 5);
-    std::regex rx("^\\s*([A-Za-z0-9_]+)='([^']*)'\\s*$");
-    std::smatch m;
-    if(!std::regex_match(stripped, m, rx)) {
-        std::cerr << "smash error: alias: invalid alias format" << std::endl;
-        return;
-    }
-    std::string name = m[1], cmd = m[2];
-    static const unordered_set<std::string> reserved = {
-        "quit","jobs","fg","cd","pwd","showpid","kill",
-        "alias","unalias","watchproc","unsetenv","chprompt",
-        "du", "whoami", "netinfo"
-    };
-    if(smash.m_aliasMap.count(name) || reserved.count(name)) {
-        std::cerr << "smash error: alias: " << name
-                  << " already exists or is a reserved command" << std::endl;
-        return;
-    }
-    smash.m_aliasMap[name] = cmd;
-
-}
-
-void UnAliasCommand::execute() {
-    SmallShell& smash = SmallShell::getInstance();
-    if (m_argc == 1) {
-        cerr << "smash error: unalias: not enough arguments" << std::endl;
-        return;
-    }
-    if (m_argc > 2) {
-        for (int i = 1; i < m_argc; i++) {
-            string name = m_argv[i];
-            auto iter = smash.m_aliasMap.find(name);
-            if (iter == smash.m_aliasMap.end()) {
-                cerr << "smash error: unalias: "<< name <<" alias does not exist" << std::endl;
-                continue;
-            }
-            smash.m_aliasMap.erase(iter);
-        }
-    }
-}
+//TODO:
+void JobsCommand::execute() {}
 
 void ForegroundCommand::execute() {
     int jobId;
@@ -267,6 +219,70 @@ void ForegroundCommand::execute() {
     SmallShell::getInstance().setFgProcPID(-1);
     this->m_jobsListPtr->removeJobById(jobId);
 }
+
+//TODO:
+void QuitCommand::execute() {}
+
+//TODO:
+void KillCommand::execute() {}
+
+void AliasCommand::execute() {
+    SmallShell &smash = SmallShell::getInstance();
+    if (m_argc == 1) {
+        //only alias without args print aliasMap
+        for (const auto &p: smash.m_aliasMap)
+            std::cout << p.first << "='" << p.second << "'" << std::endl;
+        return;
+    }
+    //check validation of args
+    std::string stripped = m_cmdLine.substr(
+        m_cmdLine.find("alias") + 5);
+    std::regex rx("^\\s*([A-Za-z0-9_]+)='([^']*)'\\s*$");
+    std::smatch m;
+    if(!std::regex_match(stripped, m, rx)) {
+        std::cerr << "smash error: alias: invalid alias format" << std::endl;
+        return;
+    }
+    std::string name = m[1], cmd = m[2];
+    static const unordered_set<std::string> reserved = {
+        "quit","jobs","fg","cd","pwd","showpid","kill",
+        "alias","unalias","watchproc","unsetenv","chprompt",
+        "du", "whoami", "netinfo"
+    };
+    if(smash.m_aliasMap.count(name) || reserved.count(name)) {
+        std::cerr << "smash error: alias: " << name
+                  << " already exists or is a reserved command" << std::endl;
+        return;
+    }
+    smash.m_aliasMap[name] = cmd;
+
+}
+
+void UnAliasCommand::execute() {
+    SmallShell& smash = SmallShell::getInstance();
+    if (m_argc == 1) {
+        cerr << "smash error: unalias: not enough arguments" << std::endl;
+        return;
+    }
+    if (m_argc > 2) {
+        for (int i = 1; i < m_argc; i++) {
+            string name = m_argv[i];
+            auto iter = smash.m_aliasMap.find(name);
+            if (iter == smash.m_aliasMap.end()) {
+                cerr << "smash error: unalias: "<< name <<" alias does not exist" << std::endl;
+                continue;
+            }
+            smash.m_aliasMap.erase(iter);
+        }
+    }
+}
+
+//TODO:
+void UnSetEnvCommand::execute() {}
+
+//TODO:
+void WatchProcCommand::execute() {}
+
 
 //--------------------SMASH CLASS!!!!!--------------------//
 /**
