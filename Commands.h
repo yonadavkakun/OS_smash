@@ -212,9 +212,9 @@ public:
 //waitpid(pid, ...) with WNOHANG to check if jobs are still running
 class JobsCommand : public BuiltInCommand {
     // TODO: Add your data members
-    JobsList *m_jobsListPtr;
+    JobsList &m_jobsListPtr;
 public:
-    JobsCommand(const std::string cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
+    JobsCommand(const std::string cmd_line, JobsList &jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
 
     virtual ~JobsCommand() {}
 
@@ -224,9 +224,9 @@ public:
 //fg
 class ForegroundCommand : public BuiltInCommand {
     // TODO: Add your data members
-    JobsList *m_jobsListPtr;
+    JobsList &m_jobsListPtr;
 public:
-    ForegroundCommand(const std::string cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
+    ForegroundCommand(const std::string cmd_line, JobsList &jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
 
     virtual ~ForegroundCommand() {}
 
@@ -236,8 +236,9 @@ public:
 //quit
 class QuitCommand : public BuiltInCommand {
     // TODO: Add your data members public:
+    JobsList &m_jobsListPtr;
 public:
-    QuitCommand(const std::string cmd_line) : BuiltInCommand(cmd_line) {};
+    QuitCommand(const std::string cmd_line, JobsList &jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
 
     virtual ~QuitCommand() {}
 
@@ -247,9 +248,9 @@ public:
 //kill
 class KillCommand : public BuiltInCommand {
     // TODO: Add your data members
-    JobsList *m_jobsListPtr;
+    JobsList &m_jobsListPtr;
 public:
-    KillCommand(const std::string cmd_line, JobsList *jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
+    KillCommand(const std::string cmd_line, JobsList &jobs) : BuiltInCommand(cmd_line), m_jobsListPtr(jobs) {};
 
     virtual ~KillCommand() {}
 

@@ -251,7 +251,9 @@ void QuitCommand::execute() {
 }
 
 //TODO:
-void KillCommand::execute() {}
+void KillCommand::execute() {
+
+}
 
 void AliasCommand::execute() {
     SmallShell &smash = SmallShell::getInstance();
@@ -348,7 +350,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
     if (firstWord == "cd") return new ChangeDirCommand(cmd_s, this->getLastPWD());
     if (firstWord == "jobs") return new JobsCommand(cmd_s, this->getJobsList());
     if (firstWord == "fg") return new ForegroundCommand(cmd_s, this->getJobsList());
-    if (firstWord == "quit") return new QuitCommand(cmd_s);
+    if (firstWord == "quit") return new QuitCommand(cmd_s, this->getJobsList());
     if (firstWord == "kill") return new KillCommand(cmd_s, this->getJobsList());
     if (firstWord == "unsetenv") return new UnSetEnvCommand(cmd_s);
     if (firstWord == "watchproc") return new WatchProcCommand(cmd_s);
