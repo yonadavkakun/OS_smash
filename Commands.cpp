@@ -302,7 +302,6 @@ SmallShell::~SmallShell() {
 }
 
 Command* SmallShell::CreateCommand(const char *cmd_line) {
-    // For example:
     std::string cmd_s = _trim(string(cmd_line));
     if (isAlias(cmd_s)) {
         cmd_s = fixAliasCmdLine(cmd_s);
@@ -310,46 +309,29 @@ Command* SmallShell::CreateCommand(const char *cmd_line) {
     std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
     firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
 
-
-    if (cmd_s.find('>') != std::string::npos) {
-        return new RedirectionCommand(cmd_s);
-    } else if (cmd_s.find('|') != std::string::npos) {
-        return new PipeCommand(cmd_s);
-    }else if (firstWord == "du") {
-        return new DiskUsageCommand(cmd_s);
-    }else if (firstWord == "whoami") {
-        return new WhoAmICommand(cmd_s);
-    }else if (firstWord == "netinfo") {
-        return new NetInfo(cmd_s);
-    }
-
-    if (firstWord == "chprompt") {
-        return new ChPromptCommand(cmd_s);
-    } else if (firstWord == "showpid") {
-        return new ShowPidCommand(cmd_s);
-    } else if (firstWord == "pwd") {
-        return new GetCurrDirCommand(cmd_s);
-    } else if (firstWord == "cd") {
-        return new ChangeDirCommand(cmd_s, this->getLastPWD());
-    } else if (firstWord == "jobs") {
-        return new JobsCommand(cmd_s, this->getJobsList());
-    } else if (firstWord == "fg") {
-        return new ForegroundCommand(cmd_s, this->getJobsList());
-    } else if (firstWord == "quit") {
-        return new QuitCommand(cmd_s, this->getJobsList());
-    } else if (firstWord == "kill") {
-        return new KillCommand(cmd_s, this->getJobsList());
-    } else if (firstWord == "alias") {
-        return new AliasCommand(cmd_s);
-    } else if (firstWord == "unalias") {
-        return new UnAliasCommand(cmd_s);
-    } else if (firstWord == "unsetenv") {
-        return new UnSetEnvCommand(cmd_s);
-    } else if (firstWord == "watchproc") {
-        return new WatchProcCommand(cmd_s);
-    } else {
-        return new ExternalCommand(cmd_s);
-    }
+    //-------------------------------------------------------------------------------------//
+    if (firstWord == "alias") return new AliasCommand(cmd_s);
+    if (firstWord == "unalias")  return new UnAliasCommand(cmd_s);
+    //TODO: make sure handling of commands like: alias ls="foo || bar"
+    //-------------------------------------------------------------------------------------//
+    if (cmd_s.find('>') != std::string::npos) return new RedirectionCommand(cmd_s);
+    if (cmd_s.find('|') != std::string::npos) return new PipeCommand(cmd_s);
+    if (firstWord == "du") return new DiskUsageCommand(cmd_s);
+    if (firstWord == "whoami") return new WhoAmICommand(cmd_s);
+    if (firstWord == "netinfo") return new NetInfo(cmd_s);
+    //-------------------------------------------------------------------------------------//
+    if (firstWord == "chprompt") return new ChPromptCommand(cmd_s);
+    if (firstWord == "showpid") return new ShowPidCommand(cmd_s);
+    if (firstWord == "pwd") return new GetCurrDirCommand(cmd_s);
+    if (firstWord == "cd") return new ChangeDirCommand(cmd_s, this->getLastPWD());
+    if (firstWord == "jobs") return new JobsCommand(cmd_s, this->getJobsList());
+    if (firstWord == "fg") return new ForegroundCommand(cmd_s, this->getJobsList());
+    if (firstWord == "quit") return new QuitCommand(cmd_s, this->getJobsList());
+    if (firstWord == "kill") return new KillCommand(cmd_s, this->getJobsList());
+    if (firstWord == "unsetenv") return new UnSetEnvCommand(cmd_s);
+    if (firstWord == "watchproc") return new WatchProcCommand(cmd_s);
+    //-------------------------------------------------------------------------------------//
+    return new ExternalCommand(cmd_s);
 }
 void SmallShell::executeCommand(const char *cmd_line) {
     // TODO: Add your implementation here
