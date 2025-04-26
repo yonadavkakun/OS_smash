@@ -291,9 +291,6 @@ void WatchProcCommand::execute() {}
 
 //--------------------SMASH CLASS--------------------//
 #pragma region SMASH CLASS
-/**
-* Creates and returns a pointer to Command class which matches the given command line (cmd_line)
-*/
 SmallShell::SmallShell() {
     // TODO: add your implementation
 }
@@ -334,7 +331,6 @@ Command* SmallShell::CreateCommand(const char *cmd_line) {
     return new ExternalCommand(cmd_s);
 }
 void SmallShell::executeCommand(const char *cmd_line) {
-    // TODO: Add your implementation here
     Command* cmd = CreateCommand(cmd_line);
     cmd->execute();
     //TODO: maybe delete cmd is needed as CreateCommand() is "new command"
