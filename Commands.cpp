@@ -310,35 +310,33 @@ Command* SmallShell::CreateCommand(const char *cmd_line) {
     std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
     firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
 
-
-    if (firstWord.compare("pwd") == 0) {
-        return new GetCurrDirCommand(cmd_s);
-    } else if (firstWord.compare("showpid") == 0) {
-        return new ShowPidCommand(cmd_s);
-    } else if (firstWord.compare("chprompt") == 0) {
+    if (firstWord == "chprompt") {
         return new ChPromptCommand(cmd_s);
-    } else if (firstWord.compare("cd") == 0) {
+    } else if (firstWord == "showpid") {
+        return new ShowPidCommand(cmd_s);
+    } else if (firstWord == "pwd") {
+        return new GetCurrDirCommand(cmd_s);
+    } else if (firstWord == "cd") {
         return new ChangeDirCommand(cmd_s, this->getLastPWD());
-    } else if (firstWord.compare("jobs") == 0) {
+    } else if (firstWord == "jobs") {
         return new JobsCommand(cmd_s, this->getJobsList());
-    } else if (firstWord.compare("fg") == 0) {
+    } else if (firstWord == "fg") {
         return new ForegroundCommand(cmd_s, this->getJobsList());
-    } else if (firstWord.compare("quit") == 0) {
+    } else if (firstWord == "quit") {
         return new QuitCommand(cmd_s, this->getJobsList());
-    } else if (firstWord.compare("kill") == 0) {
+    } else if (firstWord == "kill") {
         return new KillCommand(cmd_s, this->getJobsList());
-    } else if (firstWord.compare("alias") == 0) {
+    } else if (firstWord == "alias") {
         return new AliasCommand(cmd_s);
-    } else if (firstWord.compare("unalias") == 0) {
+    } else if (firstWord == "unalias") {
         return new UnAliasCommand(cmd_s);
-    } else if (firstWord.compare("unsetenv") == 0) {
+    } else if (firstWord == "unsetenv") {
         return new UnSetEnvCommand(cmd_s);
-    } else if (firstWord.compare("watchproc") == 0) {
+    } else if (firstWord == "watchproc") {
         return new WatchProcCommand(cmd_s);
     } else {
         return new ExternalCommand(cmd_s);
     }
-    return nullptr;
 }
 void SmallShell::executeCommand(const char *cmd_line) {
     // TODO: Add your implementation here
