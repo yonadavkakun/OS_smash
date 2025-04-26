@@ -310,6 +310,19 @@ Command* SmallShell::CreateCommand(const char *cmd_line) {
     std::string firstWord = cmd_s.substr(0, cmd_s.find_first_of(" \n"));
     firstWord = removeBackgroundSign(firstWord); //cuz we can have "kill&" != "kill"
 
+
+    if (cmd_s.find('>') != std::string::npos) {
+        return new RedirectionCommand(cmd_s);
+    } else if (cmd_s.find('|') != std::string::npos) {
+        return new PipeCommand(cmd_s);
+    }else if (firstWord == "du") {
+        return new DiskUsageCommand(cmd_s);
+    }else if (firstWord == "whoami") {
+        return new WhoAmICommand(cmd_s);
+    }else if (firstWord == "netinfo") {
+        return new NetInfo(cmd_s);
+    }
+
     if (firstWord == "chprompt") {
         return new ChPromptCommand(cmd_s);
     } else if (firstWord == "showpid") {
