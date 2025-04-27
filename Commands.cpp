@@ -596,12 +596,45 @@ void NetInfo::execute() {
 void ExternalCommand::execute() {
 
     pid_t pid = fork();
-    if (pid == 0) {
-
+    if (pid < 0) {
+        printError("fork");
+        return;
     }
+    if (pid == 0) {        // child process
+        setpgrp();
+        if (m_cmdLine.find('*') != std::string::npos ||
+            m_cmdLine.find('?') != std::string::npos) {   // complex external command
+            char *const args[] = {
+                    const_cast<char *>("/bin/bash"),
+                    const_cast<char *>("-c"),
+                    const_cast<char *>(m_cmdLine.c_str()),
+                    nullptr
+            };
+            execv("/bin/bash", args);
+        } else {                                            // simple external command
+            std::vector<char *> argv_cstr;
+            for (const auto &arg: m_argv) {
+                argv_cstr.push_back(const_cast<char *>(arg.c_str()));
+            }
+            argv_cstr.push_back(nullptr);
+            execvp(argv_cstr[0], argv_cstr.data());
+        }
 
+        printError("exec");                      // exec dont return so if we got here its an error
+        syscall(SYS_exit, 1);
+    }
+    SmallShell &smash = SmallShell::getInstance();
+    if (m_isBackgroundCommand) {
+
+        SmallShell::getInstance().getJobsList().addJob(smash.CreateCommand(getCmdLineFull().c_str()), pid, false);
+    } else {
+        smash.setFgProcPID(pid);
+        smash.setFgProcCmd(m_cmdLine);
+        int status;
+        if (syscall(SYS_wait4, pid, nullptr, 0, nullptr) == -1) printError("waitpid");
+        SmallShell::getInstance().clearFgJob();
+    }
 }
-
 //--------------------SMASH CLASS--------------------//
 #pragma region SMASH CLASS
 
@@ -679,6 +712,18 @@ void SmallShell::setFgProcPID(pid_t pid) {
     this->m_fgProcPID = pid;
 }
 
+std::string SmallShell::getFgProcCmd() const {
+    return m_fgCmd;
+}
+
+void SmallShell::setFgProcCmd(std::string cmdLine) {
+    m_fgCmd = cmdLine;
+}
+
+void SmallShell::clearFgJob() {
+    m_fgProcPID = -1;
+    m_fgCmd = "";
+}
 
 JobsList &SmallShell::getJobsList() {
     return m_jobsList;

@@ -63,7 +63,7 @@ public:
 
     ~JobsList();
 
-    void addJob(Command *cmd, bool isStopped = false, pid_t jobPID);
+    void addJob(Command *cmd, bool isStopped = false, pid_t jobPID = -1); // had to add defult arg to pid_t
 
     void printJobsList();
 
@@ -128,6 +128,8 @@ public:
     std::string getFgProcCmd() const;
 
     void setFgProcCmd(std::string cmdLine);
+
+    void clearFgJob();
 
     JobsList &getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
 
