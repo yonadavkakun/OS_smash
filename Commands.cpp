@@ -184,7 +184,7 @@ void JobsCommand::execute() {}
 
 void ForegroundCommand::execute() {
     int jobId;
-    JobsList::JobEntry *job = this->m_jobsListPtr.getLastJob(&jobId);
+    JobsList::JobEntry *job = this->m_jobsListRef.getLastJob(&jobId);
 
     //ERROR HANDLING + VALUE EXTRACTION
     //taking care of no args case error, if JobsList is empty we get nullptr from getLastJob(&jobId)
@@ -207,7 +207,7 @@ void ForegroundCommand::execute() {
             return;
         }
         //here we extracted a jobId successfully
-        job = this->m_jobsListPtr.getJobById(jobId);
+        job = this->m_jobsListRef.getJobById(jobId);
         if (job == nullptr) {
             std::cerr << "smash error: fg: job-id " << jobId << " does not exist" << std::endl;
             return;
@@ -233,10 +233,9 @@ void ForegroundCommand::execute() {
     if (waitpid(pid, nullptr, 0) == -1) printError("waitpid");
 
     SmallShell::getInstance().setFgProcPID(-1);
-    this->m_jobsListPtr.removeJobById(jobId);
+    this->m_jobsListRef.removeJobById(jobId);
 }
 
-//TODO:
 void QuitCommand::execute() {
     SmallShell &smash = SmallShell::getInstance();
     JobsList &jobs = smash.getJobsList();
@@ -251,7 +250,6 @@ void QuitCommand::execute() {
     exit(0);
 }
 
-//TODO:
 void KillCommand::execute() {
     if (m_argc != 3 || m_argv[1][0] != '-') {
         std::cerr << "smash error: kill: invalid arguments" << std::endl;
@@ -265,7 +263,7 @@ void KillCommand::execute() {
         std::cerr << "smash error: kill: invalid arguments" << std::endl;
         return;
     }
-    JobsList::JobEntry *job = m_jobsListPtr.getJobById(jobId);
+    JobsList::JobEntry *job = m_jobsListRef.getJobById(jobId);
     if (!job) {
         std::cerr << "smash error: kill: job-id " << jobId << " does not exist" << std::endl;
         return;
@@ -278,7 +276,6 @@ void KillCommand::execute() {
     std::cout << "signal number " << signum
               << " was sent to pid " << job->m_jobPID << std::endl;
 }
-
 
 void AliasCommand::execute() {
     SmallShell &smash = SmallShell::getInstance();
