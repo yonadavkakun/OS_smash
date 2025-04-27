@@ -42,7 +42,7 @@ std::string readFile(const std::string path) {
         return "";
     }
     //READ FILE
-    long bytesRead = syscall(SYS_read, fd, buffer, sizeof(buffer)-1);
+    long bytesRead = syscall(SYS_read, fd, buffer, sizeof(buffer) - 1);
     if (bytesRead <= 0) {
         syscall(SYS_close, fd);
         return "";
@@ -62,7 +62,7 @@ bool env_var_exists(string name) {
 
 
     string buffer = readFile(path);
-    if (buffer=="") return false;
+    if (buffer == "") return false;
 
     std::string env_block(buffer, buffer.size());
     size_t pos = 0;
@@ -80,7 +80,7 @@ bool env_var_exists(string name) {
     return false;
 }
 
-bool remove_env_var(const std::string& name) {
+bool remove_env_var(const std::string &name) {
     for (int i = 0; __environ[i]; ++i) {
         std::string entry(__environ[i]);
         if (entry.rfind(name + "=", 0) == 0) {
@@ -94,8 +94,7 @@ bool remove_env_var(const std::string& name) {
 }
 
 
-
-long recursiveFolderSizeCalc(const std::string& path) {
+long recursiveFolderSizeCalc(const std::string &path) {
     long totalSize = 0;
     char buffer[KB4];
 
@@ -117,13 +116,13 @@ long recursiveFolderSizeCalc(const std::string& path) {
         int entry = 0;
         while (entry < bytesRead) {
             struct linuxDirectoryEntry {
-                ino64_t        m_inodeNumber;
-                off64_t        m_offsetToNextEntry;
+                ino64_t m_inodeNumber;
+                off64_t m_offsetToNextEntry;
                 unsigned short m_recordLength;
-                unsigned char  m_fileType;
-                char           m_fileName[];
+                unsigned char m_fileType;
+                char m_fileName[];
             };
-            linuxDirectoryEntry* directoryEntries = (linuxDirectoryEntry*)(buffer + entry);
+            linuxDirectoryEntry *directoryEntries = (linuxDirectoryEntry *) (buffer + entry);
             std::string name(directoryEntries->m_fileName);
 
             if (name == "." || name == "..") {
@@ -450,7 +449,7 @@ void UnAliasCommand::execute() {
 
 void UnSetEnvCommand::execute() {
     if (m_argc <= 1) {
-        std::cerr<<"smash error: unsetenv: not enough arguments"<<std::endl;
+        std::cerr << "smash error: unsetenv: not enough arguments" << std::endl;
         return;
     }
 
@@ -458,12 +457,12 @@ void UnSetEnvCommand::execute() {
         std::string var = m_argv[i];
 
         if (!env_var_exists(var)) {
-           std::cerr<<"smash error: unsetenv: " << var <<" does not exist" <<std::endl;
+            std::cerr << "smash error: unsetenv: " << var << " does not exist" << std::endl;
             return;
         }
 
         if (!remove_env_var(var)) {
-            std::cerr<<"smash error: unsetenv failed"<<std::endl;
+            std::cerr << "smash error: unsetenv failed" << std::endl;
             return;
         }
     }
@@ -492,7 +491,7 @@ void WatchProcCommand::execute() {
     std::string procStat1 = readFile(procPathStat);
 
     //0.1sec sleep interval
-    syscall(SYS_nanosleep, &(struct timespec){0, 100000000}, NULL);
+    syscall(SYS_nanosleep, &(struct timespec) {0, 100000000}, NULL);
 
     std::string totalUptime2 = readFile(totalUptime);
     std::string procStat2 = readFile(procPathStat);
@@ -505,7 +504,7 @@ void WatchProcCommand::execute() {
 
     //==================================Parsing Fields===================================//
     unsigned long utime1 = 0, stime1 = 0, utime2 = 0, stime2 = 0;
-    double uptime1 = 0, uptime2 = 0,  memoryUsageMB = 0;
+    double uptime1 = 0, uptime2 = 0, memoryUsageMB = 0;
     int field = 0;
     std::string token;
     std::string line;
@@ -546,12 +545,13 @@ void WatchProcCommand::execute() {
     long clockTicksPerSec = sysconf(_SC_CLK_TCK);
     unsigned long procTicksDelta = (utime2 + stime2) - (utime1 + stime1);
     double totalTimeDelta = uptime2 - uptime1;
-    double cpuUsagePercent = (static_cast<double>(procTicksDelta) / (totalTimeDelta * clockTicksPerSec)) * 100; //casting to avoid integer division on some systems
+    double cpuUsagePercent = (static_cast<double>(procTicksDelta) / (totalTimeDelta * clockTicksPerSec)) *
+                             100; //casting to avoid integer division on some systems
     //==================================Printing===================================//
     std::cout << "PID: " << pid
-          << " | CPU Usage: " << std::fixed << std::setprecision(1) << cpuUsagePercent << "%"
-          << " | Memory Usage: " << std::fixed << std::setprecision(1) << memoryUsageMB << " MB"
-          << std::endl;
+              << " | CPU Usage: " << std::fixed << std::setprecision(1) << cpuUsagePercent << "%"
+              << " | Memory Usage: " << std::fixed << std::setprecision(1) << memoryUsageMB << " MB"
+              << std::endl;
 }
 
 void RedirectionCommand::execute() {
@@ -590,10 +590,17 @@ void NetInfo::execute() {
 }
 
 
-
-
-
 #pragma endregion
+
+//--------------------EXTERNAL_COMMAND::EXECUTE()--------------------//
+void ExternalCommand::execute() {
+
+    pid_t pid = fork();
+    if (pid == 0) {
+
+    }
+
+}
 
 //--------------------SMASH CLASS--------------------//
 #pragma region SMASH CLASS
@@ -664,13 +671,14 @@ void SmallShell::setLastPWD(std::string value) {
     this->m_lastPWD = value;
 }
 
-pid_t SmallShell::getFgProcPID() {
-    return this->m_FgProcPID;
+pid_t SmallShell::getFgProcPID() const {
+    return this->m_fgProcPID;
 }
 
 void SmallShell::setFgProcPID(pid_t pid) {
-    this->m_FgProcPID = pid;
+    this->m_fgProcPID = pid;
 }
+
 
 JobsList &SmallShell::getJobsList() {
     return m_jobsList;
@@ -743,7 +751,7 @@ void JobsList::killAllJobs() {
     auto iter = m_jobs.begin();
     while (iter != m_jobs.end()) {
         std::cout << iter->second.m_jobPID << ": " << iter->second.m_jobCommandString << std::endl;
-        int result = syscall(SYS_kill,iter->second.m_jobPID, SIGKILL);
+        int result = syscall(SYS_kill, iter->second.m_jobPID, SIGKILL);
         if (result == -1) printError("kill");
         ++iter; //jobs will be removed anyway on next call for any method of JobsList
     }

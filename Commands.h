@@ -88,7 +88,8 @@ private:
     std::string m_prompt = "smash";
     JobsList m_jobsList;
     std::string m_lastPWD;
-    pid_t m_FgProcPID = -1;
+    pid_t m_fgProcPID = -1;
+    std::string m_fgCmd;
 
     SmallShell();
 
@@ -120,9 +121,13 @@ public:
 
     void setLastPWD(std::string value);
 
-    pid_t getFgProcPID();
+    pid_t getFgProcPID() const;
 
     void setFgProcPID(pid_t pid);
+
+    std::string getFgProcCmd() const;
+
+    void setFgProcCmd(std::string cmdLine);
 
     JobsList &getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
 
@@ -144,7 +149,7 @@ public:
 
 class ExternalCommand : public Command {
 public:
-    ExternalCommand(const std::string cmd_line) : Command(cmd_line) {};;
+    ExternalCommand(const std::string cmd_line) : Command(cmd_line) {};
 
     virtual ~ExternalCommand() {}
 
@@ -154,7 +159,7 @@ public:
 //Eitan added ComplexExternalCommand
 class ComplexExternalCommand : public Command {
 public:
-    ComplexExternalCommand(const std::string cmd_line) : Command(cmd_line) {};;
+    ComplexExternalCommand(const std::string cmd_line) : Command(cmd_line) {};
 
     virtual ~ComplexExternalCommand() {}
 
