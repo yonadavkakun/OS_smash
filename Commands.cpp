@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <iomanip>
 #include "Commands.h"
+#include <fcntl.h>
 #include <unordered_set>
 #include <bits/regex.h>
 
@@ -569,7 +570,14 @@ void WatchProcCommand::execute() {
 }
 
 void RedirectionCommand::execute() {
-
+    int flags = O_WRONLY | O_CREAT | (m_override ? O_TRUNC : O_APPEND);
+    int mode = 0666; //read+write for everyone
+    int fd = syscall(SYS_openat, AT_FDCWD, m_outPathPart, flags, mode);
+    if (fd == -1) {
+        printError("openat");
+        return;
+    }
+    //todo: implement logic, understand fork() or dup() or dup2()
 }
 
 void PipeCommand::execute() {
@@ -895,6 +903,20 @@ Command::Command(const std::string cmd_line) {
     this->m_argc = parseCommandLine(cmd_line, &this->m_argv);
     this->m_isBackgroundCommand = isBackgroundCommand(cmd_line);
 }
+RedirectionCommand::RedirectionCommand(const std::string cmd_line): Command(cmd_line) {
+    unsigned long seperatorStart = m_cmdLine.find_first_of('>');
+    unsigned long seperatorEnd = seperatorStart;
+    if (m_cmdLine.substr(seperatorStart, 2) == ">>") {
+        seperatorEnd += 1;
+        this->m_override = false;
+    } else {
+        this->m_override = true;
+    }
+
+    this->m_commandPart = _trim(m_cmdLine.substr(0, seperatorStart));
+    this->m_outPathPart = _trim(m_cmdLine.substr( seperatorEnd + 1));
+}
+
 
 bool Command::getIsBackgroundCommand() {
     return this->m_isBackgroundCommand;

@@ -143,6 +143,7 @@ public:
 
 
 class BuiltInCommand : public Command {
+
 public:
     BuiltInCommand(const std::string cmd_line) : Command(cmd_line) {};
 
@@ -308,7 +309,9 @@ public:
 
 //Special Commands
 class RedirectionCommand : public Command {
-    // TODO: Add your data members
+    bool m_override;
+    std::string m_commandPart;
+    std::string m_outPathPart;
 public:
     explicit RedirectionCommand(const std::string cmd_line);
 
