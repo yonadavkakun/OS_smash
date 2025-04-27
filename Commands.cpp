@@ -667,8 +667,9 @@ void ExternalCommand::execute() {
     }
     SmallShell &smash = SmallShell::getInstance();
     if (m_isBackgroundCommand) {
-
-        smash.getJobsList().addJob(smash.CreateCommand(getCmdLineFull().c_str()), pid, false);
+        Command* command =smash.CreateCommand(getCmdLineFull().c_str());
+        smash.getJobsList().addJob(command, pid, false);
+        delete command;
     } else {
         smash.setFgProcPID(pid);
         smash.setFgProcCmd(m_cmdLine);
