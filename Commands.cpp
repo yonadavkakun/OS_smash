@@ -490,6 +490,30 @@ void WatchProcCommand::execute() {
           << std::endl;
 }
 
+void RedirectionCommand::execute() {
+
+}
+
+void PipeCommand::execute() {
+
+}
+
+void DiskUsageCommand::execute() {
+
+}
+
+void WhoAmICommand::execute() {
+
+}
+
+void NetInfo::execute() {
+
+}
+
+
+
+
+
 #pragma endregion
 
 //--------------------SMASH CLASS--------------------//
