@@ -595,13 +595,13 @@ void NetInfo::execute() {
 //--------------------EXTERNAL_COMMAND::EXECUTE()--------------------//
 void ExternalCommand::execute() {
 
-    pid_t pid = fork();
+    pid_t pid = fork();         //maybe need syscall
     if (pid < 0) {
         printError("fork");
         return;
     }
     if (pid == 0) {        // child process
-        setpgrp();
+        setpgrp();                                         //new set group
         if (m_cmdLine.find('*') != std::string::npos ||
             m_cmdLine.find('?') != std::string::npos) {   // complex external command
             char *const args[] = {
@@ -626,7 +626,7 @@ void ExternalCommand::execute() {
     SmallShell &smash = SmallShell::getInstance();
     if (m_isBackgroundCommand) {
 
-        SmallShell::getInstance().getJobsList().addJob(smash.CreateCommand(getCmdLineFull().c_str()), pid, false);
+        smash.getJobsList().addJob(smash.CreateCommand(getCmdLineFull().c_str()), pid, false);
     } else {
         smash.setFgProcPID(pid);
         smash.setFgProcCmd(m_cmdLine);
