@@ -237,15 +237,12 @@ void ForegroundCommand::execute() {
 }
 
 void QuitCommand::execute() {
-    SmallShell &smash = SmallShell::getInstance();
-    JobsList &jobs = smash.getJobsList();
-
     bool withKill = (m_argc >= 2) && (std::string(m_argv[1]) == "kill");
 
     if (withKill) {
-        jobs.killAllJobs();
+        m_jobsListRef.killAllJobs();
     }
-    jobs.removeFinishedJobs();
+    m_jobsListRef.removeFinishedJobs();
     //maybe free memory?
     exit(0);
 }
