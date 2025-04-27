@@ -5,6 +5,7 @@
 #include <sstream>
 #include <sys/wait.h>
 #include <sys/syscall.h>
+#include <sys/stat.h>
 #include <iomanip>
 #include "Commands.h"
 #include <unordered_set>
@@ -90,6 +91,69 @@ bool remove_env_var(const std::string& name) {
         }
     }
     return false;
+}
+
+
+
+long recursiveFolderSizeCalc(const std::string& path) {
+    long totalSize = 0;
+    char buffer[KB4];
+
+    int fd = syscall(SYS_open, path.c_str(), 0 | 131072);
+    if (fd == -1) {
+        perror("open");
+        return 0;
+    }
+
+    while (true) {
+        long bytesRead = syscall(SYS_getdents64, fd, buffer, sizeof(buffer));
+        if (bytesRead == -1) {
+            perror("getdents64");
+            syscall(SYS_close, fd);
+            return totalSize;
+        }
+        if (bytesRead == 0) break;
+
+        int entry = 0;
+        while (entry < bytesRead) {
+            struct linuxDirectoryEntry {
+                ino64_t        m_inodeNumber;
+                off64_t        m_offsetToNextEntry;
+                unsigned short m_recordLength;
+                unsigned char  m_fileType;
+                char           m_fileName[];
+            };
+            linuxDirectoryEntry* directoryEntries = (linuxDirectoryEntry*)(buffer + entry);
+            std::string name(directoryEntries->m_fileName);
+
+            if (name == "." || name == "..") {
+                entry += directoryEntries->m_recordLength;
+                continue;
+            }
+
+            std::string fullPath = path + "/" + name;
+            struct stat st;
+            //this checks if DirectoryEntry is a further directory or file.
+            //saves the status into struct stat st
+            if (syscall(SYS_lstat, fullPath.c_str(), &st) == -1) {
+                perror("lstat");
+                entry += directoryEntries->m_recordLength;
+                continue;
+            }
+
+            //macros from linux man die.net
+            if ((st.st_mode & S_IFMT) == S_IFDIR) {
+                totalSize += recursiveFolderSizeCalc(fullPath);
+            } else if ((st.st_mode & S_IFMT) == S_IFREG) {
+                totalSize += st.st_size;
+            }
+
+            entry += directoryEntries->m_recordLength;
+        }
+    }
+
+    syscall(SYS_close, fd);
+    return totalSize;
 }
 
 #pragma endregion
@@ -499,7 +563,22 @@ void PipeCommand::execute() {
 }
 
 void DiskUsageCommand::execute() {
+    std::string path = SmallShell::getInstance().getLastPWD();
+    if (m_argc > 2) {
+        std::cerr << "smash error: du: too many arguments" << std::endl;
+        return;
+    }
+    if (m_argc == 2) {
+        path = m_argv[1];
+    }
 
+    //todo: implement recursive logic: OPENPATH -> GETSUBPATHS -> OPENEACH TO SUM -> CLOSE -> RETURN
+    //todo: check if first path is legit.
+    //todo: if legit start recursion.
+
+
+    long totalSizeInKB;
+    std::cout << "Total disk usage: " << totalSizeInKB << " KB" << std::endl;
 }
 
 void WhoAmICommand::execute() {
