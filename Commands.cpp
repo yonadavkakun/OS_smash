@@ -281,14 +281,14 @@ void ForegroundCommand::execute() {
 
     // const pid_t smashPID = syscall(SYS_getpid);
     // //give terminal control to the job
-    // syscall(SYS_tcsetpgrp, fd, pid);
+    // syscall(SYS_tcsetpgrp, STDIN_FILENO, pid);
     //send SIGCONT in case process is stopped
     // if (syscall(SYS_kill, pid, SIGCONT) == -1) printError("kill");
     // //wait process to finish
     // int status;
     // if (syscall(SYS_wait4, pid, &status, 0, nullptr) == -1) printError("waitpid");
     // //after process in finished - return terminal control to the shell
-    // syscall(SYS_tcsetpgrp, fd, smashPID);
+    // syscall(SYS_tcsetpgrp, STDIN_FILENO, smashPID);
 
     if (syscall(SYS_wait4, pid, nullptr, 0, nullptr) == -1) printError("waitpid");
 
