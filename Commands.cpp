@@ -4,7 +4,7 @@
 #include <vector>
 #include <sstream>
 #include <sys/wait.h>
-#include <signal.h>
+#include <sys/syscall.h>
 #include <iomanip>
 #include "Commands.h"
 #include <unordered_set>
@@ -31,6 +31,65 @@ const std::string WHITESPACE = " \n\r\t\f\v";
 void printError(std::string sysCallName) {
     std::string errorText = "smash error: " + sysCallName + " failed";
     perror(errorText.c_str());
+}
+
+std::string readFile(const std::string path) {
+    char buffer[KB4] = {0};
+    //OPEN FILE
+    int fd = syscall(SYS_open, path.c_str(), 0);
+    if (fd == -1) {
+        return "";
+    }
+    //READ FILE
+    long bytesRead = syscall(SYS_read, fd, buffer, sizeof(buffer)-1);
+    if (bytesRead <= 0) {
+        syscall(SYS_close, fd);
+        return "";
+    }
+    buffer[bytesRead] = '\0';
+    if (syscall(SYS_close, fd)) return "";
+
+    return std::string(buffer, bytesRead);
+}
+
+//TODO: maybe move the __environ into the functions.
+extern char **__environ;
+
+bool env_var_exists(string name) {
+    int pid = syscall(SYS_getpid);
+    std::string path = "/proc/" + std::to_string(pid) + "/environ";
+
+
+    string buffer = readFile(path);
+    if (buffer=="") return false;
+
+    std::string env_block(buffer, buffer.size());
+    size_t pos = 0;
+    while (pos < env_block.size()) {
+        size_t end = env_block.find('\0', pos);
+        if (end == std::string::npos) break;
+
+        std::string entry = env_block.substr(pos, end - pos);
+        if (entry.rfind(name + "=", 0) == 0) {
+            return true;
+        }
+
+        pos = end + 1;
+    }
+    return false;
+}
+
+bool remove_env_var(const std::string& name) {
+    for (int i = 0; __environ[i]; ++i) {
+        std::string entry(__environ[i]);
+        if (entry.rfind(name + "=", 0) == 0) {
+            for (; __environ[i]; ++i) {
+                __environ[i] = __environ[i + 1];
+            }
+            return true;
+        }
+    }
+    return false;
 }
 
 #pragma endregion
@@ -179,8 +238,9 @@ void ChangeDirCommand::execute() {
     SmallShell::getInstance().setLastPWD(cwd);
 }
 
-//TODO:
-void JobsCommand::execute() {}
+void JobsCommand::execute() {
+    m_jobsListRef.printJobsList();
+}
 
 void ForegroundCommand::execute() {
     int jobId;
@@ -219,18 +279,18 @@ void ForegroundCommand::execute() {
     SmallShell::getInstance().setFgProcPID(pid);
     std::cout << job->m_jobCommandString << " " << pid << std::endl;
 
-    // const pid_t smashPID = getpid();
+    // const pid_t smashPID = syscall(SYS_getpid);
     // //give terminal control to the job
     // tcsetpgrp(STDIN_FILENO, pid);
     // //send SIGCONT in case process is stopped
-    // if (kill(pid, SIGCONT) == -1) printError("kill");
+    // if (syscall(SYS_kill, pid, SIGCONT) == -1) printError("kill");
     // //wait process to finish
     // int status;
-    // if (waitpid(pid, &status, 0) == -1) printError("waitpid");
+    // if (syscall(SYS_wait4, pid, &status, 0, nullptr) == -1) printError("waitpid");
     // //after process in finished - return terminal control to the shell
     // tcsetpgrp(STDIN_FILENO, smashPID);
 
-    if (waitpid(pid, nullptr, 0) == -1) printError("waitpid");
+    if (syscall(SYS_wait4, pid, nullptr, 0, nullptr) == -1) printError("waitpid");
 
     SmallShell::getInstance().setFgProcPID(-1);
     this->m_jobsListRef.removeJobById(jobId);
@@ -238,13 +298,12 @@ void ForegroundCommand::execute() {
 
 void QuitCommand::execute() {
     bool withKill = (m_argc >= 2) && (std::string(m_argv[1]) == "kill");
-
     if (withKill) {
         m_jobsListRef.killAllJobs();
     }
     m_jobsListRef.removeFinishedJobs();
     //maybe free memory?
-    exit(0);
+    syscall(SYS_exit, 0);
 }
 
 void KillCommand::execute() {
@@ -265,7 +324,7 @@ void KillCommand::execute() {
         std::cerr << "smash error: kill: job-id " << jobId << " does not exist" << std::endl;
         return;
     }
-    if (kill(job->m_jobPID, signum) == -1) {
+    if (syscall(SYS_kill, job->m_jobPID, signum) == -1) {
         printError("kill");
         return;
     }
@@ -325,11 +384,111 @@ void UnAliasCommand::execute() {
     }
 }
 
-//TODO:
-void UnSetEnvCommand::execute() {}
+void UnSetEnvCommand::execute() {
+    if (m_argc <= 1) {
+        std::cerr<<"smash error: unsetenv: not enough arguments"<<std::endl;
+        return;
+    }
 
-//TODO:
-void WatchProcCommand::execute() {}
+    for (int i = 1; i < m_argc; ++i) {
+        std::string var = m_argv[i];
+
+        if (!env_var_exists(var)) {
+           std::cerr<<"smash error: unsetenv: " << var <<" does not exist" <<std::endl;
+            return;
+        }
+
+        if (!remove_env_var(var)) {
+            std::cerr<<"smash error: unsetenv failed"<<std::endl;
+            return;
+        }
+    }
+}
+
+void WatchProcCommand::execute() {
+    pid_t pid;
+    //==================================Error Handling===================================//
+    if (m_argc != 2) {
+        std::cerr << "smash error: watchproc: invalid arguments" << std::endl;
+        return;
+    }
+    try {
+        pid = std::stoi(m_argv[1]);
+    } catch (const std::invalid_argument &error) {
+        std::cerr << "smash error: watchproc: invalid arguments" << std::endl;
+        return;
+    }
+    //==================================Parsing Files===================================//
+    std::string procPath = "/proc/" + pid;
+    std::string procPathStat = procPath + "/stat";
+    std::string procPathStatus = procPath + "/status";
+    std::string totalUptime = "/proc/uptime";
+
+    std::string totalUptime1 = readFile(totalUptime);
+    std::string procStat1 = readFile(procPathStat);
+
+    //0.1sec sleep interval
+    syscall(SYS_nanosleep, &(struct timespec){0, 100000000}, NULL);
+
+    std::string totalUptime2 = readFile(totalUptime);
+    std::string procStat2 = readFile(procPathStat);
+    //also procStatus1 for memory usage
+    std::string procStatus1 = readFile(procPathStat);
+    if (procStat1 == "" || procStat2 == "" || procStatus1 == "") {
+        std::cerr << "smash error: watchproc: pid " << pid << " does not exist " << std::endl;
+        return;
+    }
+
+    //==================================Parsing Fields===================================//
+    unsigned long utime1 = 0, stime1 = 0, utime2 = 0, stime2 = 0;
+    double uptime1 = 0, uptime2 = 0,  memoryUsageMB = 0;
+    int field = 0;
+    std::string token;
+    std::string line;
+
+    std::istringstream procStatStream1(procStat1);
+    std::istringstream procStatStream2(procStat2);
+    std::istringstream statusStream(procStatus1);
+
+    field = 1;
+    while (procStatStream1 >> token) {
+        if (field == 14) utime1 = std::stoul(token);
+        if (field == 15) stime1 = std::stoul(token);
+        if (field > 15) break;
+        field++;
+    }
+    field = 1;
+    while (procStatStream2 >> token) {
+        if (field == 14) utime2 = std::stoul(token);
+        if (field == 15) stime2 = std::stoul(token);
+        if (field > 15) break;
+        field++;
+    }
+
+    uptime1 = std::stod(totalUptime1.substr(0, totalUptime1.find(' ')));
+    uptime2 = std::stod(totalUptime2.substr(0, totalUptime2.find(' ')));
+
+    while (std::getline(statusStream, line)) {
+        if (line.find("VmRSS:") == 0) {
+            std::istringstream lineStream(line);
+            std::string key;
+            long valueKB;
+            lineStream >> key >> valueKB;
+            memoryUsageMB = valueKB / 1024.0;
+            break;
+        }
+    }
+    //==================================Final Calc===================================//
+    long clockTicksPerSec = sysconf(_SC_CLK_TCK);
+    unsigned long procTicksDelta = (utime2 + stime2) - (utime1 + stime1);
+    double totalTimeDelta = uptime2 - uptime1;
+    double cpuUsagePercent = (static_cast<double>(procTicksDelta) / (totalTimeDelta * clockTicksPerSec)) * 100; //casting to avoid integer division on some systems
+    //==================================Printing===================================//
+    std::cout << "PID: " << pid
+          << " | CPU Usage: " << std::fixed << std::setprecision(1) << cpuUsagePercent << "%"
+          << " | Memory Usage: " << std::fixed << std::setprecision(1) << memoryUsageMB << " MB"
+          << std::endl;
+}
 
 #pragma endregion
 
@@ -450,7 +609,7 @@ void JobsList::removeFinishedJobs() {
     auto iter = m_jobs.begin();
     while (iter != m_jobs.end()) {
         int status; //might need to use in the future, currently unsure if status is needed
-        pid_t result = waitpid(iter->second.m_jobPID, &status, WNOHANG);
+        long result = syscall(SYS_wait4, iter->second.m_jobPID, &status, WNOHANG, NULL);
 
         if (result == -1) printError("waitpid");
         if (result <= 0) ++iter;
@@ -481,7 +640,7 @@ void JobsList::killAllJobs() {
     auto iter = m_jobs.begin();
     while (iter != m_jobs.end()) {
         std::cout << iter->second.m_jobPID << ": " << iter->second.m_jobCommandString << std::endl;
-        int result = kill(iter->second.m_jobPID, SIGKILL);
+        int result = syscall(SYS_kill,iter->second.m_jobPID, SIGKILL);
         if (result == -1) printError("kill");
         ++iter; //jobs will be removed anyway on next call for any method of JobsList
     }

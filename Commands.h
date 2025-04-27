@@ -11,6 +11,7 @@
 #define COMMAND_MAX_LENGTH (200)
 #define COMMAND_MAX_ARGS (20)
 #define PATH_MAX (4096)
+#define KB4 (4096)
 
 
 class Command {
