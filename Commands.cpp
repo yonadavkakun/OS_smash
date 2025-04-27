@@ -39,16 +39,21 @@ std::string readFile(const std::string path) {
     //OPEN FILE
     int fd = syscall(SYS_open, path.c_str(), 0);
     if (fd == -1) {
+        printError("open");
         return "";
     }
     //READ FILE
     long bytesRead = syscall(SYS_read, fd, buffer, sizeof(buffer) - 1);
     if (bytesRead <= 0) {
-        syscall(SYS_close, fd);
+        printError("read");
+        if (syscall(SYS_close, fd) == -1) printError("close");
         return "";
     }
     buffer[bytesRead] = '\0';
-    if (syscall(SYS_close, fd)) return "";
+    if (syscall(SYS_close, fd) == -1) {
+        printError("close");
+        return "";
+    }
 
     return std::string(buffer, bytesRead);
 }
@@ -486,6 +491,18 @@ void WatchProcCommand::execute() {
     std::string procPathStatus = procPath + "/status";
     std::string totalUptime = "/proc/uptime";
 
+    //print if PID doesnt exist
+    int fd = syscall(SYS_open, procPathStat.c_str(), 0);
+    if (fd == -1) {
+        printError("open");
+        if (errno == ENOENT) {
+            std::cerr << "smash error: watchproc: pid " << pid << " does not exist " << std::endl;
+        }
+        return;
+    }
+    if (syscall(SYS_close, fd) == -1) printError("close");
+
+    //here for sure the PID exists.
     std::string totalUptime1 = readFile(totalUptime);
     std::string procStat1 = readFile(procPathStat);
 
@@ -497,10 +514,8 @@ void WatchProcCommand::execute() {
     //also procStatus1 for memory usage
     std::string procStatus1 = readFile(procPathStat);
     if (procStat1 == "" || procStat2 == "" || procStatus1 == "") {
-        std::cerr << "smash error: watchproc: pid " << pid << " does not exist " << std::endl;
         return;
     }
-
     //==================================Parsing Fields===================================//
     unsigned long utime1 = 0, stime1 = 0, utime2 = 0, stime2 = 0;
     double uptime1 = 0, uptime2 = 0, memoryUsageMB = 0;
@@ -581,11 +596,39 @@ void DiskUsageCommand::execute() {
 }
 
 void WhoAmICommand::execute() {
+    uid_t UID = syscall(SYS_geteuid);
+    //now we need to connect the UID w/ the userName which is held in /etc/passwd
+    std::string passwdContent = readFile("/etc/passwd");
+    if (passwdContent == "") {
+        return;
+    }
+    //parsing by lines, userName:password:UID:GID:GECOS:homeDirectory:shell
+    std::istringstream passwdStream(passwdContent);
+    std::string line;
+    while (std::getline(passwdStream, line)) {
+        std::istringstream lineStream(line);
+        std::string userName, password, UIDstring, GID, GECOS, homePath, shell;
 
+        std::getline(lineStream, userName, ':');
+        std::getline(lineStream, password, ':');
+        std::getline(lineStream, UIDstring, ':');
+        std::getline(lineStream, GID, ':');
+        std::getline(lineStream, GECOS, ':');
+        std::getline(lineStream, homePath, ':');
+        std::getline(lineStream, shell, ':');
+
+        try {
+            if (std::stoi(UIDstring) == UID) {
+                std::cout << userName << " " << homePath << std::endl;
+                return;
+            }
+        } catch (...) {
+
+        }
+    }
 }
 
 void NetInfo::execute() {
-
 }
 
 
