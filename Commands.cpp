@@ -93,61 +93,60 @@ bool remove_env_var(const std::string &name) {
     return false;
 }
 
-
+struct linuxDirectoryEntry {
+    ino64_t m_inodeNumber;
+    off64_t m_offsetToNextEntry;
+    unsigned short m_recordLength;
+    unsigned char m_fileType;
+    char m_fileName[];
+};
 long recursiveFolderSizeCalc(const std::string &path) {
     long totalSize = 0;
     char buffer[KB4];
 
     int fd = syscall(SYS_open, path.c_str(), 0 | 131072);
     if (fd == -1) {
-        perror("open");
+        printError("open");
         return 0;
     }
 
     while (true) {
         long bytesRead = syscall(SYS_getdents64, fd, buffer, sizeof(buffer));
         if (bytesRead == -1) {
-            perror("getdents64");
+            printError("getdents64");
             syscall(SYS_close, fd);
             return totalSize;
         }
         if (bytesRead == 0) break;
 
-        int entry = 0;
-        while (entry < bytesRead) {
-            struct linuxDirectoryEntry {
-                ino64_t m_inodeNumber;
-                off64_t m_offsetToNextEntry;
-                unsigned short m_recordLength;
-                unsigned char m_fileType;
-                char m_fileName[];
-            };
-            linuxDirectoryEntry *directoryEntries = (linuxDirectoryEntry *) (buffer + entry);
+        int offset = 0;
+        while (offset < bytesRead) {
+            linuxDirectoryEntry *directoryEntries = (linuxDirectoryEntry *) (buffer + offset);
             std::string name(directoryEntries->m_fileName);
 
             if (name == "." || name == "..") {
-                entry += directoryEntries->m_recordLength;
+                offset += directoryEntries->m_recordLength;
                 continue;
             }
 
             std::string fullPath = path + "/" + name;
-            struct stat st;
+            struct stat stat;
             //this checks if DirectoryEntry is a further directory or file.
             //saves the status into struct stat st
-            if (syscall(SYS_lstat, fullPath.c_str(), &st) == -1) {
-                perror("lstat");
-                entry += directoryEntries->m_recordLength;
+            if (syscall(SYS_lstat, fullPath.c_str(), &stat) == -1) {
+                printError("lstat");
+                offset += directoryEntries->m_recordLength;
                 continue;
             }
 
             //macros from linux man die.net
-            if ((st.st_mode & S_IFMT) == S_IFDIR) {
+            if ((stat.st_mode & S_IFMT) == S_IFDIR) {
                 totalSize += recursiveFolderSizeCalc(fullPath);
-            } else if ((st.st_mode & S_IFMT) == S_IFREG) {
-                totalSize += st.st_size;
+            } else if ((stat.st_mode & S_IFMT) == S_IFREG) {
+                totalSize += stat.st_size;
             }
 
-            entry += directoryEntries->m_recordLength;
+            offset += directoryEntries->m_recordLength;
         }
     }
 
@@ -571,13 +570,13 @@ void DiskUsageCommand::execute() {
     if (m_argc == 2) {
         path = m_argv[1];
     }
+    struct stat st;
+    if (syscall(SYS_lstat, path.c_str(), &st) == -1) {
+        std::cerr << "smash error: du: directory " << path << " does not exist" << std::endl;
+        return ;
+    }
 
-    //todo: implement recursive logic: OPENPATH -> GETSUBPATHS -> OPENEACH TO SUM -> CLOSE -> RETURN
-    //todo: check if first path is legit.
-    //todo: if legit start recursion.
-
-
-    long totalSizeInKB;
+    long totalSizeInKB = recursiveFolderSizeCalc(path);
     std::cout << "Total disk usage: " << totalSizeInKB << " KB" << std::endl;
 }
 
