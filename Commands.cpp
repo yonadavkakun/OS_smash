@@ -194,14 +194,14 @@ void ChPromptCommand::execute() {
 }
 
 void ShowPidCommand::execute() {
-    pid_t pid = getpid();
+    pid_t pid = syscall(SYS_getpid);
     string curr_prompt = SmallShell::getInstance().getPrompt();
     cout << curr_prompt << " pid is " << pid << endl;
 }
 
 void GetCurrDirCommand::execute() {
     char cwd[PATH_MAX];
-    if (!getcwd(cwd, PATH_MAX)) {
+    if (syscall(SYS_getcwd, cwd, PATH_MAX) == -1) {
         printError("getcwd");
         return;
     }
@@ -227,11 +227,11 @@ void ChangeDirCommand::execute() {
         newPath = m_argv[1]; //TODO: check if its relative or global, if relative need to concatenate that string
     }
     char cwd[PATH_MAX];
-    if (!getcwd(cwd, PATH_MAX)) {
+    if (syscall(SYS_getcwd, cwd, PATH_MAX) == -1) {
         printError("getcwd");
         return;
     }
-    if (chdir(newPath.c_str()) == -1) {
+    if (syscall(SYS_chdir, newPath.c_str()) == -1) {
         printError("chdir");
         return;
     }
@@ -281,14 +281,14 @@ void ForegroundCommand::execute() {
 
     // const pid_t smashPID = syscall(SYS_getpid);
     // //give terminal control to the job
-    // tcsetpgrp(STDIN_FILENO, pid);
-    // //send SIGCONT in case process is stopped
+    // syscall(SYS_tcsetpgrp, fd, pid);
+    //send SIGCONT in case process is stopped
     // if (syscall(SYS_kill, pid, SIGCONT) == -1) printError("kill");
     // //wait process to finish
     // int status;
     // if (syscall(SYS_wait4, pid, &status, 0, nullptr) == -1) printError("waitpid");
     // //after process in finished - return terminal control to the shell
-    // tcsetpgrp(STDIN_FILENO, smashPID);
+    // syscall(SYS_tcsetpgrp, fd, smashPID);
 
     if (syscall(SYS_wait4, pid, nullptr, 0, nullptr) == -1) printError("waitpid");
 
