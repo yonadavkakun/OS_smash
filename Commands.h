@@ -322,6 +322,9 @@ public:
 
 class PipeCommand : public Command {
     // TODO: Add your data members
+    std::string m_leftCmd;
+    std::string m_rightCmd;
+    bool m_toStderr;
 public:
     PipeCommand(const std::string cmd_line);
 

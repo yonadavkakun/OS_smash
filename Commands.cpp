@@ -939,6 +939,18 @@ RedirectionCommand::RedirectionCommand(const std::string cmd_line) : Command(cmd
     this->m_outPathPart = _trim(m_cmdLine.substr(seperatorEnd + 1));
 }
 
+PipeCommand::PipeCommand(const std::string cmd_line) : Command(cmd_line) {
+    size_t pos = cmd_line.find("|&");
+    if (pos != std::string::npos) {
+        m_toStderr = true;
+    } else {
+        pos = cmd_line.find('|');
+        m_toStderr = false;
+    }
+
+    m_leftCmd = _trim(cmd_line.substr(0, pos));
+    m_rightCmd = _trim(cmd_line.substr(pos + (m_toStderr ? 2 : 1)));
+}
 
 bool Command::getIsBackgroundCommand() {
     return this->m_isBackgroundCommand;
