@@ -129,7 +129,6 @@ long recursiveFolderSizeCalc(const std::string &path) {
                 entry += directoryEntries->m_recordLength;
                 continue;
             }
-
             std::string fullPath = path + "/" + name;
             struct stat st;
             //this checks if DirectoryEntry is a further directory or file.
@@ -139,14 +138,12 @@ long recursiveFolderSizeCalc(const std::string &path) {
                 entry += directoryEntries->m_recordLength;
                 continue;
             }
-
             //macros from linux man die.net
             if ((st.st_mode & S_IFMT) == S_IFDIR) {
                 totalSize += recursiveFolderSizeCalc(fullPath);
             } else if ((st.st_mode & S_IFMT) == S_IFREG) {
                 totalSize += st.st_size;
             }
-
             entry += directoryEntries->m_recordLength;
         }
     }
@@ -595,13 +592,13 @@ void NetInfo::execute() {
 //--------------------EXTERNAL_COMMAND::EXECUTE()--------------------//
 void ExternalCommand::execute() {
 
-    pid_t pid = fork();         //maybe need syscall
+    pid_t pid = fork();                                      //maybe need syscall
     if (pid < 0) {
         printError("fork");
         return;
     }
-    if (pid == 0) {        // child process
-        setpgrp();                                         //new set group
+    if (pid == 0) {                                          // child process
+        setpgrp();                                           //new set group
         if (m_cmdLine.find('*') != std::string::npos ||
             m_cmdLine.find('?') != std::string::npos) {   // complex external command
             char *const args[] = {
@@ -611,7 +608,7 @@ void ExternalCommand::execute() {
                     nullptr
             };
             execv("/bin/bash", args);
-        } else {                                            // simple external command
+        } else {                                              // simple external command
             std::vector<char *> argv_cstr;
             for (const auto &arg: m_argv) {
                 argv_cstr.push_back(const_cast<char *>(arg.c_str()));
@@ -620,7 +617,7 @@ void ExternalCommand::execute() {
             execvp(argv_cstr[0], argv_cstr.data());
         }
 
-        printError("exec");                      // exec dont return so if we got here its an error
+        printError("exec");                         // exec dont return so if we got here its an error
         syscall(SYS_exit, 1);
     }
     SmallShell &smash = SmallShell::getInstance();
