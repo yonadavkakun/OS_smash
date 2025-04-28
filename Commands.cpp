@@ -62,7 +62,7 @@ std::string readFile(const std::string path) {
 //TODO: maybe move the __environ into the functions.
 extern char **__environ;
 
-bool env_var_exists(string name) {
+bool envVarExists(string name) {
     int pid = syscall(SYS_getpid);
     std::string path = "/proc/" + std::to_string(pid) + "/environ";
 
@@ -86,7 +86,7 @@ bool env_var_exists(string name) {
     return false;
 }
 
-bool remove_env_var(const std::string &name) {
+bool removeEnvVar(const std::string &name) {
     for (int i = 0; __environ[i]; ++i) {
         std::string entry(__environ[i]);
         if (entry.rfind(name + "=", 0) == 0) {
@@ -106,6 +106,7 @@ struct linuxDirectoryEntry {
     unsigned char m_fileType;
     char m_fileName[];
 };
+
 long recursiveFolderSizeCalc(const std::string &path) {
     long totalSize = 0;
     char buffer[KB4];
@@ -461,12 +462,12 @@ void UnSetEnvCommand::execute() {
     for (int i = 1; i < m_argc; ++i) {
         std::string var = m_argv[i];
 
-        if (!env_var_exists(var)) {
+        if (!envVarExists(var)) {
             std::cerr << "smash error: unsetenv: " << var << " does not exist" << std::endl;
             return;
         }
 
-        if (!remove_env_var(var)) {
+        if (!removeEnvVar(var)) {
             std::cerr << "smash error: unsetenv failed" << std::endl;
             return;
         }
@@ -577,8 +578,28 @@ void RedirectionCommand::execute() {
         printError("openat");
         return;
     }
-    //todo: implement logic, understand fork() or dup() or dup2()
+    int stdoutBackup = dup(STDOUT_FILENO);  //backup stdout
+    if (stdoutBackup == -1) {
+        printError("dup");
+        close(fd);
+        return;
+    }
+    if (dup2(fd, STDOUT_FILENO) == -1) {
+        printError("dup2");
+        close(fd);
+        close(stdoutBackup);
+        return;
+    }
+    close(fd);
+    SmallShell &smash = SmallShell::getInstance();
+    smash.CreateCommand(m_commandPart.c_str())->execute();
+    if (dup2(stdoutBackup, STDOUT_FILENO) == -1) {
+        printError("dup2");
+    }
+    close(stdoutBackup);
 }
+//todo: implement logic, understand fork() or dup() or dup2()
+
 
 void PipeCommand::execute() {
 
@@ -596,7 +617,7 @@ void DiskUsageCommand::execute() {
     struct stat st;
     if (syscall(SYS_lstat, path.c_str(), &st) == -1) {
         std::cerr << "smash error: du: directory " << path << " does not exist" << std::endl;
-        return ;
+        return;
     }
 
     long totalSizeInKB = recursiveFolderSizeCalc(path);
@@ -630,7 +651,7 @@ void WhoAmICommand::execute() {
                 std::cout << userName << " " << homePath << std::endl;
                 return;
             }
-        } catch (...) {
+        } catch (...) { //TODO: what to do if catch??
 
         }
     }
@@ -651,7 +672,7 @@ void ExternalCommand::execute() {
         return;
     }
     if (pid == 0) {        // child process
-        setpgrp();                                         //new set group
+        setpgrp();                                         //new group ID
         if (m_cmdLine.find('*') != std::string::npos ||
             m_cmdLine.find('?') != std::string::npos) {   // complex external command
             char *const args[] = {
@@ -675,7 +696,7 @@ void ExternalCommand::execute() {
     }
     SmallShell &smash = SmallShell::getInstance();
     if (m_isBackgroundCommand) {
-        Command* command =smash.CreateCommand(getCmdLineFull().c_str());
+        Command *command = smash.CreateCommand(getCmdLineFull().c_str());
         smash.getJobsList().addJob(command, false, pid);
         delete command;
     } else {
@@ -903,7 +924,8 @@ Command::Command(const std::string cmd_line) {
     this->m_argc = parseCommandLine(cmd_line, &this->m_argv);
     this->m_isBackgroundCommand = isBackgroundCommand(cmd_line);
 }
-RedirectionCommand::RedirectionCommand(const std::string cmd_line): Command(cmd_line) {
+
+RedirectionCommand::RedirectionCommand(const std::string cmd_line) : Command(cmd_line) {
     unsigned long seperatorStart = m_cmdLine.find_first_of('>');
     unsigned long seperatorEnd = seperatorStart;
     if (m_cmdLine.substr(seperatorStart, 2) == ">>") {
@@ -914,7 +936,7 @@ RedirectionCommand::RedirectionCommand(const std::string cmd_line): Command(cmd_
     }
 
     this->m_commandPart = _trim(m_cmdLine.substr(0, seperatorStart));
-    this->m_outPathPart = _trim(m_cmdLine.substr( seperatorEnd + 1));
+    this->m_outPathPart = _trim(m_cmdLine.substr(seperatorEnd + 1));
 }
 
 
