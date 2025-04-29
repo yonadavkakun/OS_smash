@@ -602,6 +602,49 @@ void RedirectionCommand::execute() {
 
 
 void PipeCommand::execute() {
+    SmallShell &smash = SmallShell::getInstance();
+    int fd[2];
+    if (pipe(fd) == -1) {
+        printError("pipe");
+        return;
+    }
+    pid_t pid1 = fork();
+    if (pid1 < 0) {
+        printError("fork");
+        return;
+    }
+    if (pid1 == 0) {        // first child
+        setpgrp();
+        close(fd[1]); // Close stdout
+        dup2(fd[0],STDIN_FILENO)
+        close(fd[0]);
+        smash.CreateCommand(m_leftCmd.c_str())->execute();
+        exit(0);
+
+    }
+    pid_t pid2 = fork();
+    if (pid2 < 0) {
+        printError("fork");
+        return;
+    }
+    if (pid2 == 0) {        // second child
+        setpgrp();
+        close(fd[0]); // Close stdin
+        if (m_toStderr) {
+            dup2(fd[1], STDERR_FILENO);
+        } else {
+            dup2(fd[1], STDOUT_FILENO);
+        }
+        close(pipe_fd[1]);
+        smash.CreateCommand(m_rightCmd.c_str())->execute();
+        exit(0);
+
+    }
+    close(fd[0]);
+    close(fd[1]);
+
+    waitpid(pid1, nullptr, 0);
+    waitpid(pid2, nullptr, 0);
 
 }
 
