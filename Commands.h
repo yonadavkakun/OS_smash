@@ -59,9 +59,9 @@ private:
 public:
     int calcNewID();
 
-    JobsList();
+    JobsList() = default;
 
-    ~JobsList();
+    ~JobsList() = default;
 
     void addJob(Command *cmd, bool isStopped = false, pid_t jobPID = -1); // had to add defult arg to pid_t
 
