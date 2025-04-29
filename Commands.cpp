@@ -413,13 +413,26 @@ void AliasCommand::execute() {
     //check validation of args
     std::string stripped = m_cmdLine.substr(
             m_cmdLine.find("alias") + 5);
-    std::regex rx("^\\s*([A-Za-z0-9_]+)='([^']*)'\\s*$");
-    std::smatch m;
-    if (!std::regex_match(stripped, m, rx)) {
+    stripped = _trim(stripped);
+    size_t equalPos = stripped.find('=');
+    if (equalPos == std::string::npos) {
         std::cerr << "smash error: alias: invalid alias format" << std::endl;
         return;
     }
-    std::string name = m[1], cmd = m[2];
+    std::string name = _trim(stripped.substr(0, equalPos));
+    std::string value = _trim(stripped.substr(equalPos + 1));
+    if (value.size() < 2 || value.front() != '\'' || value.back() != '\'') {
+        std::cerr << "smash error: alias: invalid alias format" << std::endl;
+        return;
+    }
+    value = value.substr(1, value.size() - 2);
+//    std::regex rx("^\\s*([A-Za-z0-9_]+)='([^']*)'\\s*$");
+//    std::smatch m;
+//    if (!std::regex_match(stripped, m, rx)) {
+//        std::cerr << "smash error: alias: invalid alias format" << std::endl;
+//        return;
+//    }
+//    std::string name = m[1], cmd = m[2];
     static const unordered_set<std::string> reserved = {
             "quit", "jobs", "fg", "cd", "pwd", "showpid", "kill",
             "alias", "unalias", "watchproc", "unsetenv", "chprompt",
@@ -430,7 +443,7 @@ void AliasCommand::execute() {
                   << " already exists or is a reserved command" << std::endl;
         return;
     }
-    smash.m_aliasMap[name] = cmd;
+    smash.m_aliasMap[name] = value;
 
 }
 
@@ -509,7 +522,8 @@ void WatchProcCommand::execute() {
     std::string procStat1 = readFile(procPathStat);
 
     //0.1sec sleep interval
-    syscall(SYS_nanosleep, &(struct timespec) {0, 100000000}, NULL);
+    struct timespec ts = {0, 100000000}; //yonadav: create an object insted of &
+    syscall(SYS_nanosleep, &ts, NULL);
 
     std::string totalUptime2 = readFile(totalUptime);
     std::string procStat2 = readFile(procPathStat);
@@ -616,7 +630,7 @@ void PipeCommand::execute() {
     if (pid1 == 0) {        // first child
         setpgrp();
         close(fd[1]); // Close stdout
-        dup2(fd[0],STDIN_FILENO)
+        dup2(fd[0], STDIN_FILENO);
         close(fd[0]);
         smash.CreateCommand(m_leftCmd.c_str())->execute();
         exit(0);
