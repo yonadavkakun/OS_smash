@@ -350,15 +350,15 @@ public:
 
     void execute() override;
 };
-
-class NetInfo : public Command {
-    // TODO: Add your data members **BONUS: 10 Points**
-public:
-    NetInfo(const std::string cmd_line);
-
-    virtual ~NetInfo() {}
-
-    void execute() override;
-};
+//
+//class NetInfo : public Command {
+//    // TODO: Add your data members **BONUS: 10 Points**
+//public:
+//    NetInfo(const std::string cmd_line);
+//
+//    virtual ~NetInfo() {}
+//
+//    void execute() override;
+//};
 
 #endif //SMASH_COMMAND_H_

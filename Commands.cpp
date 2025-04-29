@@ -792,7 +792,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
     if (cmd_s.find('|') != std::string::npos) return new PipeCommand(cmd_s);
     if (firstWord == "du") return new DiskUsageCommand(cmd_s);
     if (firstWord == "whoami") return new WhoAmICommand(cmd_s);
-    if (firstWord == "netinfo") return new NetInfo(cmd_s);
+//    if (firstWord == "netinfo") return new NetInfo(cmd_s);
     //-------------------------------------------------------------------------------------//
     if (firstWord == "chprompt") return new ChPromptCommand(cmd_s);
     if (firstWord == "showpid") return new ShowPidCommand(cmd_s);
