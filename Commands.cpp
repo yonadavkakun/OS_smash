@@ -714,8 +714,8 @@ void WhoAmICommand::execute() {
     }
 }
 
-void NetInfo::execute() {
-}
+// void NetInfo::execute() {
+// }
 
 
 #pragma endregion
@@ -981,6 +981,8 @@ Command::Command(const std::string cmd_line) {
     this->m_argc = parseCommandLine(cleanLine, &this->m_argv);
     this->m_isBackgroundCommand = isBackgroundCommand(cmd_line);
 }
+
+Command::~Command() = default;
 
 RedirectionCommand::RedirectionCommand(const std::string cmd_line) : Command(cmd_line) {
     unsigned long seperatorStart = m_cmdLine.find_first_of('>');
