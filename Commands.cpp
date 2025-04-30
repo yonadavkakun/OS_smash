@@ -257,6 +257,7 @@ std::string removeBackgroundSign(const std::string cmd_line) {
 
 void ChPromptCommand::execute() {
     if (m_argc == 1) {
+        SmallShell::getInstance().setPrompt("smash");
         return;
     }
     SmallShell::getInstance().setPrompt(m_argv[1]);
