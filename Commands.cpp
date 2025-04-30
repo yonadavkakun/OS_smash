@@ -649,7 +649,7 @@ void PipeCommand::execute() {
         } else {
             dup2(fd[1], STDOUT_FILENO);
         }
-        close(pipe_fd[1]);
+        close(fd[1]);
         smash.CreateCommand(m_rightCmd.c_str())->execute();
         exit(0);
 
