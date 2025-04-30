@@ -613,8 +613,6 @@ void RedirectionCommand::execute() {
     }
     close(stdoutBackup);
 }
-//todo: implement logic, understand fork() or dup() or dup2()
-
 
 void PipeCommand::execute() {
     SmallShell &smash = SmallShell::getInstance();
