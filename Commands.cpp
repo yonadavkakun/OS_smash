@@ -681,7 +681,7 @@ void DiskUsageCommand::execute() {
 }
 
 void WhoAmICommand::execute() {
-    uid_t UID = syscall(SYS_geteuid);
+    int UID = syscall(SYS_geteuid);
     //now we need to connect the UID w/ the userName which is held in /etc/passwd
     std::string passwdContent = readFile("/etc/passwd");
     if (passwdContent == "") {
@@ -758,7 +758,6 @@ void ExternalCommand::execute() {
     } else {
         smash.setFgProcPID(pid);
         smash.setFgProcCmd(m_cmdLine);
-        int status;
         if (syscall(SYS_wait4, pid, nullptr, 0, nullptr) == -1) printError("waitpid");
         SmallShell::getInstance().clearFgJob();
     }
