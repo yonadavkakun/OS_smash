@@ -150,7 +150,7 @@ long recursiveFolderSizeCalc(const std::string &path) {
             if ((stat.st_mode & S_IFMT) == S_IFDIR) {
                 totalSize += recursiveFolderSizeCalc(fullPath);
             } else if ((stat.st_mode & S_IFMT) == S_IFREG) {
-                totalSize += stat.st_size;
+                totalSize += stat.st_blocks * 512 / 1024;
             }
 
             offset += directoryEntries->m_recordLength;
@@ -661,21 +661,23 @@ void PipeCommand::execute() {
 
 }
 
-void DiskUsageCommand::execute() {
-    std::string path = SmallShell::getInstance().getLastPWD();
+void DiskUsageCommand::execute() {                          //TODO: define no args du, and check logic
+
     if (m_argc > 2) {
         std::cerr << "smash error: du: too many arguments" << std::endl;
         return;
     }
+    std::string path;
     if (m_argc == 2) {
         path = m_argv[1];
+    } else {
+        char cwd[PATH_MAX];
+        if (!getcwd(cwd, sizeof(cwd))) {
+            printError("getcwd");
+            return;
+        }
+        path = std::string(cwd);
     }
-    struct stat st;
-    if (syscall(SYS_lstat, path.c_str(), &st) == -1) {
-        std::cerr << "smash error: du: directory " << path << " does not exist" << std::endl;
-        return;
-    }
-
     long totalSizeInKB = recursiveFolderSizeCalc(path);
     std::cout << "Total disk usage: " << totalSizeInKB << " KB" << std::endl;
 }
