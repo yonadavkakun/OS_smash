@@ -678,6 +678,12 @@ void DiskUsageCommand::execute() {                          //TODO: define no ar
         }
         path = std::string(cwd);
     }
+    struct stat st;
+    if (syscall(SYS_lstat, path.c_str(), &st) == -1) {
+        std::cerr << "smash error: du: directory " << path << " does not exist" << std::endl;
+        return;
+    }
+
     long totalSizeInKB = recursiveFolderSizeCalc(path);
     std::cout << "Total disk usage: " << totalSizeInKB << " KB" << std::endl;
 }
