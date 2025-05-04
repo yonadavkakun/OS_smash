@@ -62,29 +62,33 @@ std::string readFile(const std::string path) {
 //TODO: maybe move the __environ into the functions.
 extern char **__environ;
 
-bool envVarExists(string name) {
+bool envVarExists(const std::string &name) {
     int pid = syscall(SYS_getpid);
     std::string path = "/proc/" + std::to_string(pid) + "/environ";
 
+    std::string buffer = readFile(path);
+    if (buffer.empty()) return false;
 
-    string buffer = readFile(path);
-    if (buffer == "") return false;
-
-    std::string env_block(buffer, buffer.size());
     size_t pos = 0;
-    while (pos < env_block.size()) {
-        size_t end = env_block.find('\0', pos);
+    while (pos < buffer.size()) {
+        size_t end = buffer.find('\0', pos);
         if (end == std::string::npos) break;
 
-        std::string entry = env_block.substr(pos, end - pos);
-        if (entry.rfind(name + "=", 0) == 0) {
-            return true;
+        std::string entry = buffer.substr(pos, end - pos);
+
+        // split to key and value by first '='
+        size_t equalPos = entry.find('=');
+        if (equalPos != std::string::npos) {
+            std::string key = entry.substr(0, equalPos);
+            if (key == name) return true;
         }
 
         pos = end + 1;
     }
+
     return false;
 }
+
 
 bool removeEnvVar(const std::string &name) {
     for (int i = 0; __environ[i]; ++i) {
@@ -168,6 +172,7 @@ long recursiveFolderSizeCalc(const std::string &path, const bool isBasePath = fa
     syscall(SYS_close, fd);
     return totalSize;
 }
+
 #pragma endregion
 
 //--------------------GIVEN HELPERS--------------------//
@@ -460,7 +465,7 @@ void UnAliasCommand::execute() {
         cerr << "smash error: unalias: not enough arguments" << std::endl;
         return;
     }
-    if (m_argc > 2) {
+    if (m_argc >= 2) {
         for (int i = 1; i < m_argc; i++) {
             string name = m_argv[i];
             auto iter = smash.m_aliasMap.find(name);
