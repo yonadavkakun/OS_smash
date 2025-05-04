@@ -107,60 +107,67 @@ struct linuxDirectoryEntry {
     char m_fileName[];
 };
 
-long recursiveFolderSizeCalc(const std::string &path) {
+long recursiveFolderSizeCalc(const std::string &path, const bool isBasePath = false) {
     long totalSize = 0;
     char buffer[KB4];
 
-    int fd = syscall(SYS_open, path.c_str(), 0 | 131072);
+    int fd = syscall(SYS_open, path.c_str(), O_RDONLY | O_DIRECTORY);
     if (fd == -1) {
         printError("open");
         return 0;
     }
 
-    while (true) {
-        long bytesRead = syscall(SYS_getdents64, fd, buffer, sizeof(buffer));
-        if (bytesRead == -1) {
-            printError("getdents64");
-            syscall(SYS_close, fd);
-            return totalSize;
-        }
-        if (bytesRead == 0) break;
-
+    long bytesRead;
+    while ((bytesRead = syscall(SYS_getdents64, fd, buffer, sizeof(buffer))) > 0) {
         int offset = 0;
         while (offset < bytesRead) {
-            linuxDirectoryEntry *directoryEntries = (linuxDirectoryEntry *) (buffer + offset);
-            std::string name(directoryEntries->m_fileName);
+            linuxDirectoryEntry *entry = (linuxDirectoryEntry *) (buffer + offset);
+            std::string name(entry->m_fileName);
+
+            if (isBasePath && name == ".") {
+                std::string fullPath = path + "/" + name;
+                struct stat st;
+                if (syscall(SYS_lstat, fullPath.c_str(), &st) == -1) {
+                    printError("lstat");
+                    offset += entry->m_recordLength;
+                    continue;
+                }
+
+                totalSize += (st.st_blocks + 1) * 512 / 1024;
+                offset += entry->m_recordLength;
+                continue;
+            }
 
             if (name == "." || name == "..") {
-                offset += directoryEntries->m_recordLength;
+                offset += entry->m_recordLength;
                 continue;
             }
 
             std::string fullPath = path + "/" + name;
-            struct stat stat;
-            //this checks if DirectoryEntry is a further directory or file.
-            //saves the status into struct stat st
-            if (syscall(SYS_lstat, fullPath.c_str(), &stat) == -1) {
+            struct stat st;
+            if (syscall(SYS_lstat, fullPath.c_str(), &st) == -1) {
                 printError("lstat");
-                offset += directoryEntries->m_recordLength;
+                offset += entry->m_recordLength;
                 continue;
             }
 
-            //macros from linux man die.net
-            if ((stat.st_mode & S_IFMT) == S_IFDIR) {
+            totalSize += (st.st_blocks + 1) * 512 / 1024;
+
+            if (S_ISDIR(st.st_mode)) {
                 totalSize += recursiveFolderSizeCalc(fullPath);
-            } else if ((stat.st_mode & S_IFMT) == S_IFREG) {
-                totalSize += stat.st_blocks * 512 / 1024;
             }
 
-            offset += directoryEntries->m_recordLength;
+            offset += entry->m_recordLength;
         }
+    }
+
+    if (bytesRead == -1) {
+        printError("getdents64");
     }
 
     syscall(SYS_close, fd);
     return totalSize;
 }
-
 #pragma endregion
 
 //--------------------GIVEN HELPERS--------------------//
@@ -383,7 +390,7 @@ void KillCommand::execute() {
     }
     int signum, jobId;
     try {
-        signum = std::stoi(m_argv[1]) + 1;
+        signum = std::stoi(m_argv[1]);
         jobId = std::stoi(m_argv[2]);
     } catch (...) {
         std::cerr << "smash error: kill: invalid arguments" << std::endl;
@@ -394,13 +401,12 @@ void KillCommand::execute() {
         std::cerr << "smash error: kill: job-id " << jobId << " does not exist" << std::endl;
         return;
     }
-    if (syscall(SYS_kill, job->m_jobPID, signum) == -1) {
+    std::cout << "signal number " << signum << " was sent to pid " << job->m_jobPID << std::endl;
+    if (syscall(SYS_kill, job->m_jobPID, -signum) == -1) {
         printError("kill");
         return;
     }
 
-    std::cout << "signal number " << signum
-              << " was sent to pid " << job->m_jobPID << std::endl;
 }
 
 void AliasCommand::execute() {
@@ -683,8 +689,7 @@ void DiskUsageCommand::execute() {                          //TODO: define no ar
         std::cerr << "smash error: du: directory " << path << " does not exist" << std::endl;
         return;
     }
-
-    long totalSizeInKB = recursiveFolderSizeCalc(path);
+    long totalSizeInKB = recursiveFolderSizeCalc(path, true);
     std::cout << "Total disk usage: " << totalSizeInKB << " KB" << std::endl;
 }
 
@@ -716,7 +721,7 @@ void WhoAmICommand::execute() {
                 return;
             }
         } catch (...) { //TODO: what to do if catch??
-
+            return;
         }
     }
 }
