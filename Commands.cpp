@@ -89,7 +89,6 @@ bool envVarExists(const std::string &name) {
     return false;
 }
 
-
 bool removeEnvVar(const std::string &name) {
     for (int i = 0; __environ[i]; ++i) {
         std::string entry(__environ[i]);
@@ -395,7 +394,7 @@ void KillCommand::execute() {
     }
     int signum, jobId;
     try {
-        signum = std::stoi(m_argv[1]);
+        signum = std::stoi(m_argv[1]) * -1;
         jobId = std::stoi(m_argv[2]);
     } catch (...) {
         std::cerr << "smash error: kill: invalid arguments" << std::endl;
@@ -407,7 +406,7 @@ void KillCommand::execute() {
         return;
     }
     std::cout << "signal number " << signum << " was sent to pid " << job->m_jobPID << std::endl;
-    if (syscall(SYS_kill, job->m_jobPID, -signum) == -1) {
+    if (syscall(SYS_kill, job->m_jobPID, signum) == -1) {
         printError("kill");
         return;
     }
