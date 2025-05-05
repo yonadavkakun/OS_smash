@@ -639,9 +639,13 @@ void PipeCommand::execute() {
     }
     if (pid1 == 0) {        // first child
         setpgrp();
-        close(fd[1]); // Close stdout
-        dup2(fd[0], STDIN_FILENO);
-        close(fd[0]);
+        close(fd[0]); // Close stdin
+        if (m_toStderr) {
+            dup2(fd[1], STDERR_FILENO);
+        } else {
+            dup2(fd[1], STDOUT_FILENO);
+        }
+        close(fd[1]);
         smash.CreateCommand(m_leftCmd.c_str())->execute();
         exit(0);
 
@@ -653,16 +657,12 @@ void PipeCommand::execute() {
     }
     if (pid2 == 0) {        // second child
         setpgrp();
-        close(fd[0]); // Close stdin
-        if (m_toStderr) {
-            dup2(fd[1], STDERR_FILENO);
-        } else {
-            dup2(fd[1], STDOUT_FILENO);
-        }
-        close(fd[1]);
+
+        close(fd[1]); // Close stdout
+        dup2(fd[0], STDIN_FILENO);
+        close(fd[0]);
         smash.CreateCommand(m_rightCmd.c_str())->execute();
         exit(0);
-
     }
     close(fd[0]);
     close(fd[1]);

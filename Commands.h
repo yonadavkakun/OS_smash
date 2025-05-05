@@ -159,16 +159,16 @@ public:
     void execute() override;
 };
 
-//Eitan added ComplexExternalCommand
-class ComplexExternalCommand : public Command {
-public:
-    ComplexExternalCommand(const std::string cmd_line) : Command(cmd_line) {};
-
-    virtual ~ComplexExternalCommand() {}
-
-    void execute() override;
-};
-
+////Eitan added ComplexExternalCommand
+//class ComplexExternalCommand : public Command {
+//public:
+//    ComplexExternalCommand(const std::string cmd_line) : Command(cmd_line) {};
+//
+//    virtual ~ComplexExternalCommand() {}
+//
+//    void execute() override;
+//};
+//
 
 //chprompt
 class ChPromptCommand : public BuiltInCommand {
