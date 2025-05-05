@@ -599,7 +599,7 @@ void WatchProcCommand::execute() {
 void RedirectionCommand::execute() {
     int flags = O_WRONLY | O_CREAT | (m_override ? O_TRUNC : O_APPEND);
     int mode = 0666; //read+write for everyone
-    int fd = syscall(SYS_openat, AT_FDCWD, m_outPathPart, flags, mode);
+    int fd = syscall(SYS_openat, AT_FDCWD, m_outPathPart.c_str(), flags, mode);
     if (fd == -1) {
         printError("openat");
         return;
@@ -1001,17 +1001,26 @@ Command::Command(const std::string cmd_line) {
 Command::~Command() = default;
 
 RedirectionCommand::RedirectionCommand(const std::string cmd_line) : Command(cmd_line) {
-    unsigned long seperatorStart = m_cmdLine.find_first_of('>');
-    unsigned long seperatorEnd = seperatorStart;
-    if (m_cmdLine.substr(seperatorStart, 2) == ">>") {
-        seperatorEnd += 1;
-        this->m_override = false;
+    size_t sep = m_cmdLine.find('>');
+    // if (sep == std::string::npos) {
+    //     throw std::runtime_error("internal: no redirection symbol");
+    // }
+
+    // append (>>)
+    if (sep + 1 < m_cmdLine.size() && m_cmdLine[sep + 1] == '>') {
+        m_override = false;  // >>
+        ++sep;
     } else {
-        this->m_override = true;
+        m_override = true;    // >
     }
 
-    this->m_commandPart = _trim(m_cmdLine.substr(0, seperatorStart));
-    this->m_outPathPart = _trim(m_cmdLine.substr(seperatorEnd + 1));
+    m_commandPart = _trim(m_cmdLine.substr(0, m_cmdLine.find('>')));
+
+    size_t filePos = m_cmdLine.find_first_not_of(" \t\r\n", sep + 1);
+    // if (filePos == std::string::npos) {
+    //     throw std::runtime_error("smash error: redirection – missing file name");
+    // }
+    m_outPathPart = _trim(m_cmdLine.substr(filePos));
 }
 
 PipeCommand::PipeCommand(const std::string cmd_line) : Command(cmd_line) {
