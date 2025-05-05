@@ -471,7 +471,7 @@ void UnAliasCommand::execute() {
             auto iter = smash.m_aliasMap.find(name);
             if (iter == smash.m_aliasMap.end()) {
                 cerr << "smash error: unalias: " << name << " alias does not exist" << std::endl;
-                continue;
+                return;
             }
             smash.m_aliasMap.erase(iter);
         }
@@ -513,7 +513,7 @@ void WatchProcCommand::execute() {
         return;
     }
     //==================================Parsing Files===================================//
-    std::string procPath = "/proc/" + pid;
+    std::string procPath = "/proc/" + std::to_string(pid);
     std::string procPathStat = procPath + "/stat";
     std::string procPathStatus = procPath + "/status";
     std::string totalUptime = "/proc/uptime";
@@ -540,7 +540,7 @@ void WatchProcCommand::execute() {
     std::string totalUptime2 = readFile(totalUptime);
     std::string procStat2 = readFile(procPathStat);
     //also procStatus1 for memory usage
-    std::string procStatus1 = readFile(procPathStat);
+    std::string procStatus1 = readFile(procPathStatus);
     if (procStat1 == "" || procStat2 == "" || procStatus1 == "") {
         return;
     }
