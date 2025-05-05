@@ -511,29 +511,23 @@ void WatchProcCommand::execute() {
         std::cerr << "smash error: watchproc: invalid arguments" << std::endl;
         return;
     }
+    //check if PID doesnt exist
+    if (syscall(SYS_kill, pid, 0) == -1 && errno == ESRCH) {
+        std::cerr << "smash error: watchproc: pid " << pid << " does not exist " << std::endl;
+        return;
+    }
     //==================================Parsing Files===================================//
     std::string procPath = "/proc/" + std::to_string(pid);
     std::string procPathStat = procPath + "/stat";
     std::string procPathStatus = procPath + "/status";
     std::string totalUptime = "/proc/uptime";
 
-    //print if PID doesnt exist
-    int fd = syscall(SYS_open, procPathStat.c_str(), 0);
-    if (fd == -1) {
-        printError("open");
-        if (errno == ENOENT) {
-            std::cerr << "smash error: watchproc: pid " << pid << " does not exist " << std::endl;
-        }
-        return;
-    }
-    if (syscall(SYS_close, fd) == -1) printError("close");
-
     //here for sure the PID exists.
     std::string totalUptime1 = readFile(totalUptime);
     std::string procStat1 = readFile(procPathStat);
 
-    //0.1sec sleep interval
-    struct timespec ts = {0, 100000000}; //yonadav: create an object insted of &
+    //0.5sec sleep interval
+    struct timespec ts = {0, 500000000}; //yonadav: create an object insted of &
     syscall(SYS_nanosleep, &ts, NULL);
 
     std::string totalUptime2 = readFile(totalUptime);
