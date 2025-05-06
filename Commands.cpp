@@ -66,7 +66,7 @@ std::string readFile(const std::string path) {
     return std::string(buffer, bytesRead);
 }
 
-//TODO: maybe move the __environ into the functions.
+//TODO: maybe move the __environ inside the functions.
 extern char **__environ;
 
 bool envVarExists(const std::string &name) {
@@ -948,11 +948,9 @@ void ExternalCommand::execute() {
 #pragma region SMASH CLASS
 
 SmallShell::SmallShell() {
-    // TODO: add your implementation
 }
 
 SmallShell::~SmallShell() {
-    // TODO: add your implementation
 }
 
 Command *SmallShell::CreateCommand(const char *cmd_line) {
@@ -1054,7 +1052,6 @@ std::string SmallShell::fixAliasCmdLine(std::string cmd_line) {
     std::string rest = cmd_line.substr(cmd_line.find_first_of(" \n") + 1, cmd_line.length());
     firstWord = m_aliasMap.find(firstWord)->second;
     return firstWord + rest;
-    //TODO: check & rules
 }
 
 #pragma endregion

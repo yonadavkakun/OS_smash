@@ -34,7 +34,6 @@ public:
     std::string getCmdLineFull();
     //virtual void prepare();
     //virtual void cleanup();
-    // TODO: Add your extra methods if needed
 };
 
 class JobsList {
@@ -78,12 +77,10 @@ public:
 
     JobEntry *getLastStoppedJob(int *jobId);
 
-    // TODO: Add extra methods or modify exisitng ones as needed
 };
 
 class SmallShell {
 private:
-    // TODO: Add your data members
     std::string m_prompt = "smash";
     JobsList m_jobsList;
     std::string m_lastPWD;
@@ -110,8 +107,6 @@ public:
 
     void executeCommand(const char *cmd_line);
 
-    // TODO: add extra methods as needed
-
     std::string getPrompt();
 
     void setPrompt(std::string value);
@@ -130,8 +125,7 @@ public:
 
     void clearFgJob();
 
-    JobsList &getJobsList(); //TODO: maybe reference instead of ptr - vise-versa
-
+    JobsList &getJobsList();
 
     bool isAlias(std::string cmd_line);
 
@@ -320,7 +314,6 @@ public:
 };
 
 class PipeCommand : public Command {
-    // TODO: Add your data members
     std::string m_leftCmd;
     std::string m_rightCmd;
     bool m_toStderr;
@@ -351,7 +344,6 @@ public:
 };
 
 class NetInfo : public Command {
-    // TODO: Add your data members **BONUS: 10 Points**
 public:
     NetInfo(const std::string cmd_line) : Command(cmd_line) {};
 

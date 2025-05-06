@@ -15,5 +15,4 @@ void ctrlCHandler(int sig_num) {
             smash.clearFgJob();
         }
     }
-    // TODO: Add your implementation
 }
