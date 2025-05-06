@@ -10,7 +10,14 @@
 #include "Commands.h"
 #include <fcntl.h>
 #include <unordered_set>
-// #include <bits/regex.h>
+
+#include <net/if.h>
+#include <cerrno>
+#include <iomanip>
+#include <cstring>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 using namespace std;
 
@@ -170,6 +177,86 @@ long recursiveFolderSizeCalc(const std::string &path, const bool isBasePath = fa
 
     syscall(SYS_close, fd);
     return totalSize;
+}
+
+
+/* ---------- IP & Netmask ---------- */
+static bool getIfaceAddr(const std::string &iface,
+                         std::string &ip, std::string &mask) {
+    int s = socket(AF_INET, SOCK_DGRAM, 0);
+    if (s == -1) {
+        printError("socket");
+        return false;
+    }
+
+    ifreq ifr{};
+    std::snprintf(ifr.ifr_name, IFNAMSIZ, "%s", iface.c_str());
+
+    /* IP */
+    if (ioctl(s, SIOCGIFADDR, &ifr) == -1) {
+        close(s);
+        return false;
+    }
+    ip = inet_ntoa(((sockaddr_in *) &ifr.ifr_addr)->sin_addr);
+
+    /* Netmask */
+    if (ioctl(s, SIOCGIFNETMASK, &ifr) == -1) {
+        close(s);
+        return false;
+    }
+    mask = inet_ntoa(((sockaddr_in *) &ifr.ifr_netmask)->sin_addr);
+
+    close(s);
+    return true;
+}
+
+/* ---------- Gateway (/proc/net/route) ---------- */
+
+static std::string getDefaultGateway(const std::string &iface) {
+    std::string file = readFile("/proc/net/route");
+    std::istringstream in(file);
+    std::string line;
+    std::getline(in, line);                  // כותרת
+
+    while (std::getline(in, line)) {
+        std::istringstream ls(line);
+        std::string ifname;
+        unsigned int dest = 0, gw = 0, flags = 0;
+
+        ls >> ifname >> std::hex >> dest >> gw >> flags;
+        if (ifname != iface || dest != 0 || !(flags & 0x2))
+            continue;                        // לא ברירת‑מחדל/ממשק/UP
+
+        /* --- פעם אחת: Little → Big --- */
+        uint32_t ip_net = htonl(gw);         // עכשיו ב‑Network‑Order
+
+        /* --- בניית‑מחרוזת ידנית --- */
+        std::ostringstream out;
+        out << ((ip_net >> 24) & 0xFF) << '.'
+            << ((ip_net >> 16) & 0xFF) << '.'
+            << ((ip_net >> 8) & 0xFF) << '.'
+            << (ip_net & 0xFF);
+
+        return out.str();                    // 192.168.114.2
+    }
+    return "";
+}
+
+/* ---------- DNSServers (/etc/resolv.conf) ---------- */
+static std::vector<std::string> getDnsServers() {
+    std::vector<std::string> v;
+    std::string data = readFile("/etc/resolv.conf");
+    std::istringstream in(data);
+    std::string word;
+    while (in >> word) {
+        if (word == "nameserver") {
+            std::string ip;
+            in >> ip;
+            v.push_back(ip);
+        }
+        std::getline(in, word);
+    }
+    return v;
 }
 
 #pragma endregion
@@ -724,9 +811,39 @@ void WhoAmICommand::execute() {
     }
 }
 
-// void NetInfo::execute() {
-// }
+void NetInfo::execute() {
+    if (m_argc < 2) {
+        std::cerr << "smash error: netinfo: interface not specified" << std::endl;
+        return;
+    }
+    std::string iface = m_argv[1];
 
+    // ממשק קיים?
+    if (if_nametoindex(iface.c_str()) == 0) {
+        std::cerr << "smash error: netinfo: interface "
+                  << iface << " does not exist" << std::endl;
+        return;
+    }
+
+    std::string ip, mask;
+    if (!getIfaceAddr(iface, ip, mask)) {
+        std::cerr << "smash error: netinfo: failed to query interface" << std::endl;
+        return;
+    }
+    std::string gw = getDefaultGateway(iface);
+    auto dns = getDnsServers();
+
+    /* ---------- הדפסה ---------- */
+    std::cout << "IP Address: " << ip << std::endl;
+    std::cout << "Subnet Mask: " << mask << std::endl;
+    std::cout << "Default Gateway: " << gw << std::endl;
+    std::cout << "DNS Servers: ";
+    for (size_t i = 0; i < dns.size(); ++i) {
+        std::cout << dns[i];
+        if (i + 1 < dns.size()) std::cout << ", ";
+    }
+    std::cout << std::endl;
+}
 
 #pragma endregion
 
@@ -801,7 +918,7 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
     if (cmd_s.find('|') != std::string::npos) return new PipeCommand(cmd_s);
     if (firstWord == "du") return new DiskUsageCommand(cmd_s);
     if (firstWord == "whoami") return new WhoAmICommand(cmd_s);
-//    if (firstWord == "netinfo") return new NetInfo(cmd_s);
+    if (firstWord == "netinfo") return new NetInfo(cmd_s);
     //-------------------------------------------------------------------------------------//
     if (firstWord == "chprompt") return new ChPromptCommand(cmd_s);
     if (firstWord == "showpid") return new ShowPidCommand(cmd_s);
