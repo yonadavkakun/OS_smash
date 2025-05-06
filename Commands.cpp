@@ -963,7 +963,6 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
 
     //-------------------------------------------------------------------------------------//
     if (firstWord == "alias") return new AliasCommand(cmd_s);
-    //TODO: make sure handling of commands like: alias ls="foo || bar"
     //-------------------------------------------------------------------------------------//
     if (cmd_s.find('>') != std::string::npos) return new RedirectionCommand(cmd_s);
     if (cmd_s.find('|') != std::string::npos) return new PipeCommand(cmd_s);
