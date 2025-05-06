@@ -259,6 +259,35 @@ static std::vector<std::string> getDnsServers() {
     return v;
 }
 
+static bool parseUtimeStime(const std::string &statLine,
+                            unsigned long long &utime,
+                            unsigned long long &stime) {
+    size_t rp = statLine.find(')');
+    if (rp == std::string::npos) return false;
+
+    std::istringstream in(statLine.substr(rp + 2));
+
+    std::string tok;
+    for (int i = 0; i < 11; ++i) in >> tok;
+
+    in >> utime >> stime;
+    return !in.fail();
+}
+
+static bool parseTotalCpuTicks(const std::string &statContent,
+                               unsigned long long &total) {
+    std::istringstream in(statContent);
+    std::string label;
+    unsigned long long val = 0, sum = 0;
+
+    if (!(in >> label) || label != "cpu")
+        return false;
+
+    while (in >> val) sum += val;
+    total = sum;
+    return true;
+}
+
 #pragma endregion
 
 //--------------------GIVEN HELPERS--------------------//
@@ -607,17 +636,19 @@ void WatchProcCommand::execute() {
     std::string procPath = "/proc/" + std::to_string(pid);
     std::string procPathStat = procPath + "/stat";
     std::string procPathStatus = procPath + "/status";
-    std::string totalUptime = "/proc/uptime";
+//    std::string totalUptime = "/proc/uptime";
 
     //here for sure the PID exists.
-    std::string totalUptime1 = readFile(totalUptime);
+    std::string systemStat1 = readFile("/proc/stat");
+//    std::string totalUptime1 = readFile(totalUptime);
     std::string procStat1 = readFile(procPathStat);
 
     //0.5sec sleep interval
     struct timespec ts = {0, 500000000}; //yonadav: create an object insted of &
     syscall(SYS_nanosleep, &ts, NULL);
 
-    std::string totalUptime2 = readFile(totalUptime);
+    std::string systemStat2 = readFile("/proc/stat");
+//    std::string totalUptime2 = readFile(totalUptime);
     std::string procStat2 = readFile(procPathStat);
     //also procStatus1 for memory usage
     std::string procStatus1 = readFile(procPathStatus);
@@ -625,33 +656,40 @@ void WatchProcCommand::execute() {
         return;
     }
     //==================================Parsing Fields===================================//
-    unsigned long utime1 = 0, stime1 = 0, utime2 = 0, stime2 = 0;
+//    unsigned long utime1 = 0, stime1 = 0, utime2 = 0, stime2 = 0;
     double uptime1 = 0, uptime2 = 0, memoryUsageMB = 0;
-    int field = 0;
-    std::string token;
+//    int field = 0;
+//    std::string token;
     std::string line;
-
-    std::istringstream procStatStream1(procStat1);
-    std::istringstream procStatStream2(procStat2);
+//
+//    std::istringstream procStatStream1(procStat1);
+//    std::istringstream procStatStream2(procStat2);
     std::istringstream statusStream(procStatus1);
+//
+//    field = 1;
+//    while (procStatStream1 >> token) {
+//        if (field == 14) utime1 = std::stoul(token);
+//        if (field == 15) stime1 = std::stoul(token);
+//        if (field > 15) break;
+//        field++;
+//    }
+//    field = 1;
+//    while (procStatStream2 >> token) {
+//        if (field == 14) utime2 = std::stoul(token);
+//        if (field == 15) stime2 = std::stoul(token);
+//        if (field > 15) break;
+//        field++;
+//    }
+    unsigned long long utime1 = 0, stime1 = 0, utime2 = 0, stime2 = 0;
 
-    field = 1;
-    while (procStatStream1 >> token) {
-        if (field == 14) utime1 = std::stoul(token);
-        if (field == 15) stime1 = std::stoul(token);
-        if (field > 15) break;
-        field++;
-    }
-    field = 1;
-    while (procStatStream2 >> token) {
-        if (field == 14) utime2 = std::stoul(token);
-        if (field == 15) stime2 = std::stoul(token);
-        if (field > 15) break;
-        field++;
+    if (!parseUtimeStime(procStat1, utime1, stime1) ||
+        !parseUtimeStime(procStat2, utime2, stime2)) {
+        std::cerr << "smash error: watchproc: failed to parse /proc data" << std::endl;
+        return;
     }
 
-    uptime1 = std::stod(totalUptime1.substr(0, totalUptime1.find(' ')));
-    uptime2 = std::stod(totalUptime2.substr(0, totalUptime2.find(' ')));
+//    uptime1 = std::stod(totalUptime1.substr(0, totalUptime1.find(' ')));
+//    uptime2 = std::stod(totalUptime2.substr(0, totalUptime2.find(' ')));
 
     while (std::getline(statusStream, line)) {
         if (line.find("VmRSS:") == 0) {
@@ -663,12 +701,26 @@ void WatchProcCommand::execute() {
             break;
         }
     }
+    unsigned long long totalTicks1 = 0, totalTicks2 = 0;
+    if (!parseTotalCpuTicks(systemStat1, totalTicks1) ||
+        !parseTotalCpuTicks(systemStat2, totalTicks2)) {
+        std::cerr << "smash error: watchproc: failed to parse /proc/stat" << std::endl;
+        return;
+    }
+    unsigned long long totalTicksDelta = totalTicks2 - totalTicks1;
     //==================================Final Calc===================================//
-    long clockTicksPerSec = sysconf(_SC_CLK_TCK);
-    unsigned long procTicksDelta = (utime2 + stime2) - (utime1 + stime1);
-    double totalTimeDelta = uptime2 - uptime1;
-    double cpuUsagePercent = (static_cast<double>(procTicksDelta) / (totalTimeDelta * clockTicksPerSec)) *
-                             100; //casting to avoid integer division on some systems
+//    long clockTicksPerSec = sysconf(_SC_CLK_TCK);
+//    unsigned long procTicksDelta = (utime2 + stime2) - (utime1 + stime1);
+//    double totalTimeDelta = uptime2 - uptime1;
+//    double cpuUsagePercent = (static_cast<double>(procTicksDelta) / (totalTimeDelta * clockTicksPerSec)) *
+//                             100; //casting to avoid integer division on some systems
+    unsigned long long procTicksDelta = (utime2 + stime2) - (utime1 + stime1);
+
+    double cpuUsagePercent = 0.0;
+    if (totalTicksDelta != 0) {
+        cpuUsagePercent = (static_cast<double>(procTicksDelta) /
+                           static_cast<double>(totalTicksDelta)) * 100.0;
+    }
     //==================================Printing===================================//
     std::cout << "PID: " << pid
               << " | CPU Usage: " << std::fixed << std::setprecision(1) << cpuUsagePercent << "%"
