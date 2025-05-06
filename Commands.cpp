@@ -110,8 +110,8 @@ bool removeEnvVar(const std::string &name) {
 }
 
 struct linuxDirectoryEntry {
-    ino64_t m_inodeNumber;
-    off64_t m_offsetToNextEntry;
+    unsigned long int m_inodeNumber;
+    long int m_offsetToNextEntry;
     unsigned short m_recordLength;
     unsigned char m_fileType;
     char m_fileName[];
@@ -857,7 +857,7 @@ void WhoAmICommand::execute() {
                 std::cout << userName << " " << homePath << std::endl;
                 return;
             }
-        } catch (...) { //TODO: what to do if catch??
+        } catch (...) {
             return;
         }
     }
@@ -963,11 +963,11 @@ Command *SmallShell::CreateCommand(const char *cmd_line) {
 
     //-------------------------------------------------------------------------------------//
     if (firstWord == "alias") return new AliasCommand(cmd_s);
-    if (firstWord == "unalias") return new UnAliasCommand(cmd_s);
     //TODO: make sure handling of commands like: alias ls="foo || bar"
     //-------------------------------------------------------------------------------------//
     if (cmd_s.find('>') != std::string::npos) return new RedirectionCommand(cmd_s);
     if (cmd_s.find('|') != std::string::npos) return new PipeCommand(cmd_s);
+    if (firstWord == "unalias") return new UnAliasCommand(cmd_s);
     if (firstWord == "du") return new DiskUsageCommand(cmd_s);
     if (firstWord == "whoami") return new WhoAmICommand(cmd_s);
     if (firstWord == "netinfo") return new NetInfo(cmd_s);
