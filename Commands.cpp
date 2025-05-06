@@ -216,7 +216,7 @@ static std::string getDefaultGateway(const std::string &iface) {
     std::string file = readFile("/proc/net/route");
     std::istringstream in(file);
     std::string line;
-    std::getline(in, line);                  // כותרת
+    std::getline(in, line);
 
     while (std::getline(in, line)) {
         std::istringstream ls(line);
@@ -225,10 +225,10 @@ static std::string getDefaultGateway(const std::string &iface) {
 
         ls >> ifname >> std::hex >> dest >> gw >> flags;
         if (ifname != iface || dest != 0 || !(flags & 0x2))
-            continue;                        // לא ברירת‑מחדל/ממשק/UP
+            continue;
 
         /* --- פעם אחת: Little → Big --- */
-        uint32_t ip_net = htonl(gw);         // עכשיו ב‑Network‑Order
+        uint32_t ip_net = htonl(gw);
 
         /* --- בניית‑מחרוזת ידנית --- */
         std::ostringstream out;
@@ -237,7 +237,7 @@ static std::string getDefaultGateway(const std::string &iface) {
             << ((ip_net >> 8) & 0xFF) << '.'
             << (ip_net & 0xFF);
 
-        return out.str();                    // 192.168.114.2
+        return out.str();
     }
     return "";
 }
@@ -643,8 +643,8 @@ void WatchProcCommand::execute() {
 //    std::string totalUptime1 = readFile(totalUptime);
     std::string procStat1 = readFile(procPathStat);
 
-    //0.5sec sleep interval
-    struct timespec ts = {0, 500000000}; //yonadav: create an object insted of &
+    //1sec sleep interval
+    struct timespec ts = {0, 1000000000}; //yonadav: create an object insted of &
     syscall(SYS_nanosleep, &ts, NULL);
 
     std::string systemStat2 = readFile("/proc/stat");
@@ -870,7 +870,7 @@ void NetInfo::execute() {
     }
     std::string iface = m_argv[1];
 
-    // ממשק קיים?
+
     if (if_nametoindex(iface.c_str()) == 0) {
         std::cerr << "smash error: netinfo: interface "
                   << iface << " does not exist" << std::endl;
