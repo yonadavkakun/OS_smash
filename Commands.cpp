@@ -420,19 +420,21 @@ void ChangeDirCommand::execute() {
             return;
         }
         newPath = SmallShell::getInstance().getLastPWD();
+    } else if (m_argv[1][0] == '/') {
+        newPath = m_argv[1];
     } else {
-        newPath = m_argv[1]; //TODO: check if its relative or global, if relative need to concatenate that string
-    }
-    char cwd[PATH_MAX];
-    if (syscall(SYS_getcwd, cwd, PATH_MAX) == -1) {
-        printError("getcwd");
-        return;
+            char cwd[PATH_MAX];
+            if (syscall(SYS_getcwd, cwd, PATH_MAX) == -1) {
+                printError("getcwd");
+                return;
+            }
+            newPath = std::string(cwd) + "/" + m_argv[1];
     }
     if (syscall(SYS_chdir, newPath.c_str()) == -1) {
         printError("chdir");
         return;
     }
-    SmallShell::getInstance().setLastPWD(cwd);
+    SmallShell::getInstance().setLastPWD(newPath);
 }
 
 void JobsCommand::execute() {
