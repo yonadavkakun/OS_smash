@@ -422,12 +422,12 @@ void ChangeDirCommand::execute() {
     } else if (m_argv[1][0] == '/') {
         newPath = m_argv[1];
     } else {
-            char cwd[PATH_MAX];
-            if (syscall(SYS_getcwd, cwd, PATH_MAX) == -1) {
-                printError("getcwd");
-                return;
-            }
-            newPath = std::string(cwd) + "/" + m_argv[1];
+        char cwd[PATH_MAX];
+        if (syscall(SYS_getcwd, cwd, PATH_MAX) == -1) {
+            printError("getcwd");
+            return;
+        }
+        newPath = std::string(cwd) + "/" + m_argv[1];
     }
     if (syscall(SYS_chdir, newPath.c_str()) == -1) {
         printError("chdir");
@@ -527,11 +527,11 @@ void KillCommand::execute() {
         std::cerr << "smash error: kill: job-id " << jobId << " does not exist" << std::endl;
         return;
     }
+    std::cout << "signal number " << signum << " was sent to pid " << job->m_jobPID << std::endl;
     if (syscall(SYS_kill, job->m_jobPID, signum) == -1) {
         printError("kill");
         return;
     }
-    std::cout << "signal number " << signum << " was sent to pid " << job->m_jobPID << std::endl;
 
 
 }
