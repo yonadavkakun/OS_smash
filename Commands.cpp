@@ -738,9 +738,9 @@ void WatchProcCommand::execute() {
 void RedirectionCommand::execute() {
     int flags = O_WRONLY | O_CREAT | (m_override ? O_TRUNC : O_APPEND);
     int mode = 0666; //read+write for everyone
-    int fd = syscall(SYS_openat, AT_FDCWD, m_outPathPart.c_str(), flags, mode);
+    int fd = syscall(SYS_open, m_outPathPart.c_str(), flags, mode);
     if (fd == -1) {
-        printError("openat");
+        printError("open");
         return;
     }
     int stdoutBackup = dup(STDOUT_FILENO);  //backup stdout
