@@ -392,8 +392,7 @@ void ChPromptCommand::execute() {
 
 void ShowPidCommand::execute() {
     pid_t pid = syscall(SYS_getpid);
-    string curr_prompt = SmallShell::getInstance().getPrompt();
-    cout << curr_prompt << " pid is " << pid << endl;
+    cout << "smash pid is " << pid << endl;
 }
 
 void GetCurrDirCommand::execute() {
@@ -489,8 +488,13 @@ void ForegroundCommand::execute() {
     // //after process in finished - return terminal control to the shell
     // syscall(SYS_tcsetpgrp, STDIN_FILENO, smashPID);
 
-    if (syscall(SYS_wait4, pid, nullptr, 0, nullptr) == -1) printError("waitpid");
-
+//    if (syscall(SYS_wait4, pid, nullptr, 0, nullptr) == -1) printError("waitpid");
+    long result = syscall(SYS_wait4, pid, nullptr, 0, nullptr);
+    if (result == -1) {
+        if (errno != ECHILD) {
+            printError("waitpid");
+        }
+    }
     SmallShell::getInstance().setFgProcPID(-1);
     this->m_jobsListRef.removeJobById(jobId);
 }
@@ -523,11 +527,12 @@ void KillCommand::execute() {
         std::cerr << "smash error: kill: job-id " << jobId << " does not exist" << std::endl;
         return;
     }
-    std::cout << "signal number " << signum << " was sent to pid " << job->m_jobPID << std::endl;
     if (syscall(SYS_kill, job->m_jobPID, signum) == -1) {
         printError("kill");
         return;
     }
+    std::cout << "signal number " << signum << " was sent to pid " << job->m_jobPID << std::endl;
+
 
 }
 
@@ -1052,6 +1057,7 @@ std::string SmallShell::fixAliasCmdLine(std::string cmd_line) {
     std::string rest = cmd_line.substr(cmd_line.find_first_of(" \n") + 1, cmd_line.length());
     firstWord = m_aliasMap.find(firstWord)->second;
     return firstWord + rest;
+    //TODO: check & rules
 }
 
 #pragma endregion
@@ -1071,7 +1077,13 @@ void JobsList::removeFinishedJobs() {
         int status; //might need to use in the future, currently unsure if status is needed
         long result = syscall(SYS_wait4, iter->second.m_jobPID, &status, WNOHANG, NULL);
 
-        if (result == -1) printError("waitpid");
+        if (result == -1) {
+            if (errno == ECHILD) {
+                iter = m_jobs.erase(iter);
+                continue;
+            }
+            printError("waitpid");
+        }
         if (result <= 0) ++iter;
         else iter = m_jobs.erase(iter); //TODO: make sure i dont want to remove failed jobs where waitpid() returned -1
     }
