@@ -1,38 +1,41 @@
-The given skeleton includes the following files:
-- Commands.h/Commands.cpp: The supported commands of smash, each command is represented by a class that inherits from either BuiltInCommand or ExternalCommand. Each command that you add should implement execute, which is a virtual method, that executes the command.
-- signals.h/signals.cpp: Declares and implements requires signal handler: SIGINT handler to handle Ctr+C If you are going to implement the bonus part then you have to implement additional handler for SIG_ALRM.
-- smash.cpp: Contains the smash main, which runs an infinite loop that receives the next typed command and sends it to SmallShell::executeCommand to handle it. Please note that if you are going to implement the bonus part, then you have to define a handler for SIG_ALRM in the main (in this file).
-- Makefile: builds and tests using a basic test your smash. You can use "make zip" to prepare a zip file for submission; this is recommended, which makes sure you follow our submission's structure. 
-- test_input1.txt / test_expected_output1.txt: basic test files that being used by the given Makefile to run a basic test on your smash implementation. 
+# Smash – Mini Unix Shell  
+**Operating Systems (234123) – Wet HW 1, Spring 2025, Technion**
 
-Our solution and the skeleton code as well use a few known design patterns for making the code modular and readable. We use mainly two design patterns: Singleton and Factory Method. There are many resources on the internet explaining about these design patters; they are, sometimes, known as the GoF (Gan of Four) design patters. We recommend you do a quick review of these two design patters for a better understanding of the skeleton.
+> Personal implementation of a limited Unix-like shell, developed as part of the Technion Operating Systems course.  
+> 📄 Full assignment spec: see `WHW1.pdf` in this repository.
 
-How to start:
-First, you have to understand the skeleton design.
-The given skeleton works as follows:
-- in smash.cpp the main function runs an infinite loop that reads the next typed command
-- after reading the next command it calls the SmallShell::executeCommand
-- SmallShell::executeCommand should create the relevant command class using the factory method CreateCommand
-- After instantiating the relevant Command class, you have to:
-	- fork if needed
-	- call setpgrp from the child process
-	- run the created-command execute method (from the child process or parent process?)
-	- should the parent wait for the child? if yes, then how? using wait or waitpid?
+---
 
-To implement new commands, you need to:
-- Implement the new command Class in Commands.cpp
-- Add any private data fields in the created class and initialize them in the ctor
-- Implement the new command execute method
-- Add if statement to handle it in the SmallShell::CreateCommand
+## ✨ Features
 
-We recommend that you start your implementation with:
-- the simple built-in commands (e.g., chprompt/pwd/showpid/cd/...), after making sure that they work fine with no bugs, then move forward
-- implement the rest of the built-in commands 
-- implement the external commands
-- implement the execution of external commands in the background
-- implement the jobs list and all relevant commands (fg/jobs/...) 
-- implement the I/O redirection
-- implement the du and whoami commands
-- Finally implement the bonus command and pipes
+| Category | Details |
+|----------|---------|
+| **Built-in commands** | `chprompt`, `showpid`, `pwd`, `cd`, `jobs`, `fg`, `quit`, `kill`, `alias`, `unalias`, `unsetenv`, `watchproc` |
+| **External commands** | Regular executables via `execvp`; patterns containing `*` or `?` are delegated to `/bin/bash -c` |
+| **Background jobs** | Trailing `&` launches the job in the background and tracks it in a **Jobs List** |
+| **I/O redirection** | `>` (overwrite) and `>>` (append) |
+| **Pipes** | `cmd1 \| cmd2` and `cmd1 \|& cmd2` (stdout or stderr) |
+| **Signal handling** | *Ctrl-C* (`SIGINT`) cleanly terminates the current foreground job |
+| **Resource monitor** | `watchproc <pid>` – one-shot snapshot of CPU % and RAM usage |
+| **Limits (per spec)** | ≤ 100 concurrent jobs · command line ≤ 200 chars · ≤ 20 args each |
 
-Good luck :)
+---
+## ⚙️ Build
+
+```bash
+git clone https://github.com/yonadavkakun/OS_HW1.git
+cd OS_HW1
+make 
+
+./smash
+smash> showpid
+smash pid is 4242
+
+smash> sleep 100 &
+smash> jobs
+[1] sleep 100 &
+
+smash> fg 1
+sleep 100 &
+^Csmash: got ctrl-C
+smash: process 4243 was killed
